@@ -1,0 +1,75 @@
+# =========================================================
+# RENDER BLUEPRINT — deploy backend + frontend SEKALIGUS
+# =========================================================
+# Cara pakai:
+#   1. Push repo ini ke GitHub (kalau belum).
+#   2. Di Render Dashboard: New > Blueprint > connect repo ini.
+#   3. Render otomatis baca file ini dan bikin 2 service di bawah.
+#   4. Saat proses "Deploy Blueprint", Render akan minta Anda isi env var
+#      yang ditandai `sync: false` (secret) — isi sesuai .env lokal Anda.
+#   5. CLIENT_URL (backend) & NEXT_PUBLIC_API_BASE_URL (frontend) TIDAK
+#      perlu diisi manual — otomatis saling terhubung lewat `fromService`
+#      di bawah, jadi tidak ada acara "deploy dulu, baru tau URL-nya, baru
+#      set manual, baru redeploy" seperti kalau bikin service satu-satu.
+#
+# Setelah Blueprint selesai deploy, jangan lupa jalankan sekali:
+#   (dari Render Dashboard > foodmart-backend > Shell)
+#   npm run create-admin -- admin@foodmart.id PasswordAman123 "Nama Admin"
+# =========================================================
+
+services:
+  - type: web
+    runtime: node
+    name: foodmart-backend
+    plan: free
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    # CLIENT_URL dibangun saat runtime dari hostname frontend (lihat fromService
+    # FRONTEND_HOST di bawah) — dipakai untuk CORS & redirect Midtrans.
+    startCommand: CLIENT_URL="https://$FRONTEND_HOST" node dist/server.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: FRONTEND_HOST
+        fromService:
+          type: web
+          name: foodmart-frontend
+          property: host
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: MIDTRANS_SERVER_KEY
+        sync: false
+      - key: MIDTRANS_CLIENT_KEY
+        sync: false
+      - key: MIDTRANS_IS_PRODUCTION
+        value: "false"
+      - key: RATE_LIMIT_WINDOW_MS
+        value: "900000"
+      - key: RATE_LIMIT_MAX
+        value: "100"
+
+  - type: web
+    runtime: node
+    name: foodmart-frontend
+    plan: free
+    rootDir: frontend
+    # NEXT_PUBLIC_API_BASE_URL digabung dari hostname backend (BACKEND_HOST)
+    # saat build — harus di buildCommand (bukan startCommand) karena Next.js
+    # meng-inline nilai NEXT_PUBLIC_* ke bundle SAAT build, bukan saat runtime.
+    # NEXT_PUBLIC_SUPABASE_URL & NEXT_PUBLIC_SUPABASE_ANON_KEY (di bawah, lewat
+    # envVars biasa) otomatis ke-inject sebagai env var asli tanpa trik apa pun.
+    buildCommand: npm install && NEXT_PUBLIC_API_BASE_URL="https://$BACKEND_HOST/api" npm run build
+    startCommand: npm start
+    envVars:
+      - key: BACKEND_HOST
+        fromService:
+          type: web
+          name: foodmart-backend
+          property: host
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false

@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Environment variables (JANGAN commit — berisi service role key & secret lain)
+.env
+.env.local
+.env.*.local
+
+# Build output
+.next/
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.vscode/
+.idea/
+.DS_Store
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
