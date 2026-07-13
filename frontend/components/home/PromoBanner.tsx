@@ -11,10 +11,20 @@ import { useBanners } from "@/hooks/useProducts";
 const AUTO_SLIDE_MS = 5000;
 
 export default function PromoBanner() {
-  const { data: banners, isLoading, isError } = useBanners();
+  const { data: rawBanners, isLoading, isError } = useBanners();
+
+  // PENTING: banner tanpa gambar tidak berguna untuk ditampilkan, dan
+  // <Image src> Next.js menolak nilai `null` secara ketat (ini yang bikin
+  // build Vercel gagal: "Type 'string | null' is not assignable to type
+  // 'string | StaticImport'"). Filter di sini sekaligus menyingkirkan data
+  // banner yang gambarnya kosong DAN memastikan TypeScript tahu imageUrl
+  // pasti string (bukan null) untuk banner yang tersisa.
+  const banners = (rawBanners ?? []).filter(
+    (b): b is typeof b & { imageUrl: string } => !!b.imageUrl
+  );
   const [active, setActive] = useState(0);
 
-  const count = banners?.length ?? 0;
+  const count = banners.length;
 
   const goTo = useCallback(
     (index: number) => {
@@ -44,7 +54,7 @@ export default function PromoBanner() {
     );
   }
 
-  if (isError || !banners || banners.length === 0) {
+  if (isError || banners.length === 0) {
     return null;
   }
 
