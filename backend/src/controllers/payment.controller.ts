@@ -55,12 +55,21 @@ export const paymentController = {
         // balas 200 supaya Midtrans berhenti retry.
         const httpStatusCode = (midtransErr as { httpStatusCode?: string })?.httpStatusCode;
         if (httpStatusCode === "404") {
-          await supabaseAdmin
-            .from("orders")
-            .update({ status: "cancelled" })
-            .eq("order_number", payload.order_id)
-            .eq("status", "pending");
-          res.status(200).json({ success: true, message: "Transaksi tidak ditemukan di Midtrans, order ditandai cancelled" });
+          // PENTING: JANGAN otomatis mengubah status order jadi cancelled
+          // di sini. Sandbox Midtrans kadang mengirim notifikasi duplikat
+          // atau lebih awal sebelum transaksi benar-benar ter-index di
+          // sisi mereka (race condition) — kalau order langsung ditandai
+          // cancelled saat itu, notifikasi "settlement" asli yang menyusul
+          // TIDAK akan mengubahnya lagi jadi confirmed (karena kode di
+          // bawah hanya update kalau status order masih "pending"),
+          // sehingga order yang sebenarnya berhasil malah nyangkut di
+          // status cancelled selamanya. Cukup balas 200 di sini supaya
+          // Midtrans berhenti retry; biarkan notifikasi final yang
+          // sebenarnya (settlement/expire/cancel) yang menentukan status.
+          console.warn(
+            `[Midtrans] Transaksi ${payload.order_id} belum/tidak ditemukan di Midtrans, notifikasi diabaikan tanpa mengubah status order.`
+          );
+          res.status(200).json({ success: true, message: "Diabaikan: transaksi belum/tidak ditemukan di Midtrans" });
           return;
         }
         throw midtransErr;
