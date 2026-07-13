@@ -3,8 +3,9 @@
 Rebuild pixel-perfect dari desain Figma, dengan arsitektur enterprise-ready.
 **Status: Fase 1–6 selesai — customer side + Admin Panel lengkap.**
 
-> 🚀 **Mau hosting frontend + backend sekaligus?** Lihat [`DEPLOY.md`](./DEPLOY.md)
-> — panduan deploy 1 langkah ke Render pakai `render.yaml` yang sudah disiapkan.
+> 🚀 **Mau hosting frontend + backend?** Ada 2 panduan siap pakai:
+> - [`VERCEL_DEPLOY.md`](./VERCEL_DEPLOY.md) — backend jadi serverless function, cold start lebih cepat
+> - [`DEPLOY.md`](./DEPLOY.md) — pakai Render Blueprint, 1 file `render.yaml` buat 2 service sekaligus
 
 ---
 
