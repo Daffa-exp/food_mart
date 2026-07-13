@@ -36,7 +36,7 @@ export default function AdminBannersPage() {
         {banners?.map((b) => (
           <div key={b.id} className="overflow-hidden rounded-card border border-surface-border bg-white">
             <div className="relative h-32 w-full bg-surface-cream">
-              <Image src={getProductImage([b.imageUrl])} alt={b.title ?? "Banner"} fill className="object-cover" />
+              <Image src={getProductImage(b.imageUrl ? [b.imageUrl] : [])} alt={b.title ?? "Banner"} fill className="object-cover" />
               {b.videoUrl && (
                 <span className="absolute left-2 top-2 flex items-center gap-1 rounded-pill bg-black/70 px-2 py-0.5 text-[11px] font-semibold text-white">
                   <Video className="h-3 w-3" /> Video

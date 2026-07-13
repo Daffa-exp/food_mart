@@ -111,6 +111,7 @@ function CheckoutForm() {
         },
         onError: () => {
           toast.error("Pembayaran gagal, silakan coba lagi");
+          router.push(`/checkout/gagal?order_id=${result.orderId}`);
         },
         onClose: () => {
           toast("Kamu menutup jendela pembayaran sebelum selesai");

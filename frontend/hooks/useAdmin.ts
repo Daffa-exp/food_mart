@@ -27,6 +27,7 @@ export function useDashboardSummary() {
   return useQuery({
     queryKey: ["admin-dashboard-summary"],
     queryFn: () => adminDashboardService.getSummary(),
+    refetchInterval: 15000,
   });
 }
 
@@ -132,6 +133,11 @@ export function useAdminOrders(params: AdminOrderListParams) {
   return useQuery({
     queryKey: ["admin-orders", params],
     queryFn: () => adminOrderService.list(params),
+    // Poll berkala supaya perubahan status dari webhook Midtrans (pembayaran
+    // settlement/gagal) langsung kelihatan di sini tanpa admin harus manual
+    // refresh halaman. refetchIntervalInBackground default false, jadi
+    // otomatis berhenti polling kalau tab tidak aktif — hemat resource.
+    refetchInterval: 15000,
   });
 }
 
@@ -140,6 +146,7 @@ export function useAdminOrder(id: string) {
     queryKey: ["admin-order", id],
     queryFn: () => adminOrderService.getById(id),
     enabled: !!id,
+    refetchInterval: 15000,
   });
 }
 
