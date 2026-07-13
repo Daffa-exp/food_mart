@@ -42,7 +42,30 @@ export const paymentController = {
       }
 
       // Double-check ke Midtrans, jangan hanya percaya payload webhook.
-      const verifiedStatus = await midtransService.getTransactionStatus(payload.order_id);
+      let verifiedStatus;
+      try {
+        verifiedStatus = await midtransService.getTransactionStatus(payload.order_id);
+      } catch (midtransErr) {
+        // PENTING: sebelumnya error apapun dari Midtrans (termasuk transaksi
+        // lama/expired yang sudah tidak ada di sisi Midtrans — respons 404
+        // "Transaction doesn't exist") membuat handler ini CRASH dengan 500,
+        // sehingga Midtrans terus menerus retry notifikasi yang sama tanpa
+        // henti. Untuk kasus "transaksi tidak ditemukan", ini bukan error
+        // yang perlu ditangani — cukup anggap order tsb gagal/expired, dan
+        // balas 200 supaya Midtrans berhenti retry.
+        const httpStatusCode = (midtransErr as { httpStatusCode?: string })?.httpStatusCode;
+        if (httpStatusCode === "404") {
+          await supabaseAdmin
+            .from("orders")
+            .update({ status: "cancelled" })
+            .eq("order_number", payload.order_id)
+            .eq("status", "pending");
+          res.status(200).json({ success: true, message: "Transaksi tidak ditemukan di Midtrans, order ditandai cancelled" });
+          return;
+        }
+        throw midtransErr;
+      }
+
       const mappedStatus = mapMidtransStatus(
         verifiedStatus.transaction_status,
         verifiedStatus.fraud_status
