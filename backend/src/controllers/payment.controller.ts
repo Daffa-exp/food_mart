@@ -42,9 +42,18 @@ export const paymentController = {
       }
 
       // Double-check ke Midtrans, jangan hanya percaya payload webhook.
+      //
+      // PENTING: dulu kode ini pakai payload.order_id untuk cek status.
+      // Itu bekerja untuk kartu kredit/VA/GoPay, TAPI menurut dokumentasi
+      // resmi Midtrans, metode DANA (dan metode BI-SNAP lainnya) WAJIB
+      // dicek pakai transaction_id, bukan order_id — kalau tetap pakai
+      // order_id, Midtrans selalu balas "Transaction doesn't exist" 404
+      // walau transaksinya valid & sudah settlement. Solusinya: selalu
+      // pakai transaction_id (sudah tersedia di payload notifikasi),
+      // yang valid untuk SEMUA metode pembayaran, tidak cuma DANA.
       let verifiedStatus;
       try {
-        verifiedStatus = await midtransService.getTransactionStatus(payload.order_id);
+        verifiedStatus = await midtransService.getTransactionStatus(payload.transaction_id);
       } catch (midtransErr) {
         // PENTING: sebelumnya error apapun dari Midtrans (termasuk transaksi
         // lama/expired yang sudah tidak ada di sisi Midtrans — respons 404

@@ -15,7 +15,6 @@ const coreApi = new midtransClient.CoreApi({
 
 export interface SnapTransactionInput {
   orderId: string; // pakai order_number, bukan UUID internal, agar rapi di dashboard Midtrans
-  internalOrderId: string; // UUID asli — dipakai untuk redirect balik ke halaman kita
   grossAmount: number;
   customer: {
     firstName: string;
@@ -77,19 +76,6 @@ export const midtransService = {
         price: item.price,
         quantity: item.quantity,
       })),
-      // Sebagian metode bayar (GoPay, QRIS, VA, dsb) tidak selesai lewat
-      // callback JS onSuccess — Midtrans redirect browser langsung ke URL
-      // "finish" ini dan otomatis menempelkan `order_id` versi MEREKA
-      // (= order_number kita) di query string. Kalau tidak di-set eksplisit
-      // di sini, Midtrans pakai default dari dashboard yang query param-nya
-      // bentrok sama `order_id` UUID yang dipakai halaman kita → salah ambil
-      // order. Jadi arahkan langsung ke UUID asli supaya konsisten dengan
-      // alur onSuccess di popup.
-      callbacks: {
-        finish: `${env.CLIENT_URL}/checkout/berhasil?order_id=${input.internalOrderId}`,
-        error: `${env.CLIENT_URL}/checkout/berhasil?order_id=${input.internalOrderId}`,
-        pending: `${env.CLIENT_URL}/checkout/berhasil?order_id=${input.internalOrderId}`,
-      },
       // Semua metode di bawah ini diaktifkan di Midtrans Dashboard Sandbox,
       // enabled_payments opsional dikosongkan agar Snap menampilkan semua
       // metode yang aktif di akun (QRIS, GoPay, ShopeePay, DANA, OVO,
@@ -107,8 +93,12 @@ export const midtransService = {
    * Verifikasi status transaksi langsung ke Midtrans (dipanggil dari webhook
    * handler untuk double-check, bukan hanya percaya payload notifikasi mentah
    * — praktik keamanan standar Midtrans).
+   *
+   * PENTING: parameter ini harus transaction_id, BUKAN order_id kita sendiri.
+   * Untuk metode DANA & BI-SNAP, Midtrans mewajibkan transaction_id di sini;
+   * order_id tidak akan ditemukan meski transaksinya valid.
    */
-  async getTransactionStatus(orderId: string) {
-    return coreApi.transaction.status(orderId);
+  async getTransactionStatus(transactionId: string) {
+    return coreApi.transaction.status(transactionId);
   },
 };
