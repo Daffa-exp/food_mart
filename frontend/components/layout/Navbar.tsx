@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Heart, ShoppingCart, Bell, Soup, User, LogOut, Package } from "lucide-react";
+import { Search, Heart, ShoppingCart, Bell, Soup, User, LogOut, Package, Menu as MenuIcon, X } from "lucide-react";
 import { cn } from "@/utils/format";
 import { useCartStore } from "@/store/cart-store";
 import { useHasMounted } from "@/hooks/useHasMounted";
@@ -34,6 +34,7 @@ export default function Navbar() {
 
   const [search, setSearch] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   function handleSearchSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -89,6 +90,14 @@ export default function Navbar() {
 
         {/* Icons */}
         <div className="flex items-center gap-2 sm:ml-2">
+          <button
+            onClick={() => setIsMobileNavOpen((o) => !o)}
+            aria-label="Buka menu navigasi"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-ink-700 hover:bg-surface-cream md:hidden"
+          >
+            {isMobileNavOpen ? <X className="h-5 w-5" /> : <MenuIcon className="h-5 w-5" />}
+          </button>
+
           <IconBadge icon={Heart} count={hasMounted ? wishlistedIds.size : 0} href="/wishlist" label="Wishlist" />
           <IconBadge icon={ShoppingCart} count={cartCount} href="/keranjang" label="Keranjang" />
           <IconBadge icon={Bell} count={hasMounted ? unreadCount : 0} href="/notifikasi" label="Notifikasi" dot />
@@ -140,6 +149,47 @@ export default function Navbar() {
           )}
         </div>
       </div>
+
+      <AnimatePresence>
+        {isMobileNavOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden border-t border-surface-border bg-white md:hidden"
+          >
+            <div className="space-y-1 px-4 py-3">
+              <form onSubmit={handleSearchSubmit} className="relative mb-2">
+                <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  type="text"
+                  placeholder="Cari makanan favorit..."
+                  className="w-full rounded-pill border border-surface-border bg-surface-cream/60 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-primary-400 focus:bg-white focus:ring-2 focus:ring-primary-100"
+                />
+              </form>
+              {NAV_LINKS.map((link) => {
+                const isActive = link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setIsMobileNavOpen(false)}
+                    className={cn(
+                      "block rounded-input px-3 py-2.5 text-sm font-medium text-ink-700 hover:bg-surface-cream",
+                      isActive && "bg-primary-50 text-primary-500"
+                    )}
+                  >
+                    {link.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 }

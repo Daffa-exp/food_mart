@@ -98,8 +98,10 @@ export default function ProductCard({ product }: ProductCardProps) {
             whileTap={{ scale: 0.9 }}
             onClick={handleAddToCart}
             disabled={!inStock}
+            aria-label={justAdded ? "Ditambahkan ke keranjang" : "Tambah ke keranjang"}
             className={cn(
-              "flex items-center gap-1 rounded-pill bg-primary-500 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-primary-600 disabled:cursor-not-allowed disabled:bg-ink-400",
+              "flex shrink-0 items-center justify-center gap-1 rounded-full bg-primary-500 text-white transition-colors hover:bg-primary-600 disabled:cursor-not-allowed disabled:bg-ink-400",
+              "h-9 w-9 sm:h-auto sm:w-auto sm:rounded-pill sm:px-3 sm:py-2 sm:text-xs sm:font-semibold",
               justAdded && "bg-success-500 hover:bg-success-500"
             )}
           >
@@ -108,9 +110,9 @@ export default function ProductCard({ product }: ProductCardProps) {
               transition={{ duration: 0.4 }}
               className="flex items-center"
             >
-              {justAdded ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+              {justAdded ? <Check className="h-4 w-4 sm:h-3.5 sm:w-3.5" /> : <Plus className="h-4 w-4 sm:h-3.5 sm:w-3.5" />}
             </motion.span>
-            {justAdded ? "Ditambahkan" : "Keranjang"}
+            <span className="hidden sm:inline">{justAdded ? "Ditambahkan" : "Keranjang"}</span>
           </motion.button>
         </div>
       </div>

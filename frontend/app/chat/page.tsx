@@ -19,16 +19,16 @@ export default function ChatPage() {
   return (
     <>
       <Navbar />
-      <main className="mx-auto flex h-[calc(100vh-73px)] max-w-7xl flex-col px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mb-4">
-          <h1 className="flex items-center gap-2 text-xl font-extrabold text-ink-900 sm:text-2xl">
-            <MessageSquareText className="h-6 w-6 text-primary-500" />
-            Live Chat
-          </h1>
-          <p className="mt-1 text-sm text-ink-700">
-            Chat langsung dengan Admin FoodMart soal produk, pesanan, atau pertanyaan umum.
-          </p>
-        </div>
+     <main className="mx-auto flex h-[calc(100dvh-65px)] max-w-7xl flex-col px-4 py-3 sm:h-[calc(100vh-73px)] sm:py-6 sm:px-6 lg:px-8">
+  <div className="mb-2 sm:mb-4">
+    <h1 className="flex items-center gap-2 text-base font-extrabold text-ink-900 sm:text-xl md:text-2xl">
+      <MessageSquareText className="h-5 w-5 text-primary-500 sm:h-6 sm:w-6" />
+      Live Chat
+    </h1>
+    <p className="mt-0.5 hidden text-sm text-ink-700 sm:block">
+      Chat langsung dengan Admin FoodMart soal produk, pesanan, atau pertanyaan umum.
+    </p>
+  </div>
 
         <RequireAuth message="Masuk untuk mulai chat dengan Admin FoodMart">
           <Suspense fallback={<div className="h-full animate-pulse rounded-card border border-surface-border bg-surface-cream" />}>
@@ -87,7 +87,7 @@ function ChatPageInner() {
   return (
     <div className="flex min-h-0 flex-1 overflow-hidden rounded-card border border-surface-border bg-white shadow-sm">
       {/* Daftar percakapan */}
-      <aside className={cn("flex w-full max-w-xs flex-col border-r border-surface-border", activeConversation && "hidden sm:flex")}>
+     <aside className={cn("flex w-full flex-col border-r border-surface-border sm:max-w-xs", activeConversation && "hidden sm:flex")}>
         <div className="border-b border-surface-border p-4">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />

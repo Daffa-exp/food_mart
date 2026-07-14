@@ -81,9 +81,6 @@ export function useAdminProductMutations() {
       adminProductService.updateStock(id, quantity, note),
     onSuccess: () => {
       invalidate();
-      // Halaman Inventory pakai query key terpisah ("admin-inventory"), jadi
-      // perlu di-invalidate juga di sini, atau tabelnya tidak ikut refresh
-      // otomatis dan kelihatan harus reload manual.
       queryClient.invalidateQueries({ queryKey: ["admin-inventory"] });
       toast.success("Stok berhasil diperbarui");
     },
@@ -104,7 +101,7 @@ export function useAdminCategoryMutations() {
   const queryClient = useQueryClient();
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["admin-categories"] });
-    queryClient.invalidateQueries({ queryKey: ["categories"] }); // dipakai juga di sisi customer
+    queryClient.invalidateQueries({ queryKey: ["categories"] });
   };
 
   const create = useMutation({
@@ -133,11 +130,8 @@ export function useAdminOrders(params: AdminOrderListParams) {
   return useQuery({
     queryKey: ["admin-orders", params],
     queryFn: () => adminOrderService.list(params),
-    // Poll berkala supaya perubahan status dari webhook Midtrans (pembayaran
-    // settlement/gagal) langsung kelihatan di sini tanpa admin harus manual
-    // refresh halaman. refetchIntervalInBackground default false, jadi
-    // otomatis berhenti polling kalau tab tidak aktif — hemat resource.
     refetchInterval: 15000,
+    refetchIntervalInBackground: true,
   });
 }
 
@@ -147,6 +141,7 @@ export function useAdminOrder(id: string) {
     queryFn: () => adminOrderService.getById(id),
     enabled: !!id,
     refetchInterval: 15000,
+    refetchIntervalInBackground: true,
   });
 }
 
@@ -273,7 +268,7 @@ export function useAdminInventory(lowStockOnly = false) {
 }
 
 export function useAdminInventoryMutations() {
-  return useAdminProductMutations(); // updateStock sudah ada di sana
+  return useAdminProductMutations();
 }
 
 export function useAdminAccounts() {
