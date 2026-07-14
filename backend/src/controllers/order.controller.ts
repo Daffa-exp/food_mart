@@ -149,7 +149,6 @@ console.table(midtransItems);
 // Generate Snap Token
 const snap = await midtransService.createSnapTransaction({
   orderId: order.order_number,
-  internalOrderId: order.id,
   grossAmount: Math.round(finalTotal),
   customer: {
     firstName: payload.fullName,
@@ -182,16 +181,7 @@ const snap = await midtransService.createSnapTransaction({
 
   async getOrderById(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id } = req.params;
-      // Tolak lebih awal kalau param jelas bukan UUID maupun format nomor
-      // order kita ("FM-2026-xxxxxx") — mis. placeholder yang belum
-      // diganti nilai asli, atau salah ketik.
-      const looksValid = /^[0-9a-f-]{36}$/i.test(id) || /^FM-\d{4}-\d+$/i.test(id);
-      if (!looksValid) {
-        return res.status(400).json({ success: false, message: "ID atau nomor order tidak valid" });
-      }
-
-      const order = await orderRepository.findById(id);
+      const order = await orderRepository.findById(req.params.id);
       res.json({ success: true, data: order });
     } catch (err) {
       next(err);
