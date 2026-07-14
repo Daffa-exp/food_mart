@@ -149,6 +149,7 @@ console.table(midtransItems);
 // Generate Snap Token
 const snap = await midtransService.createSnapTransaction({
   orderId: order.order_number,
+  internalOrderId: order.id,
   grossAmount: Math.round(finalTotal),
   customer: {
     firstName: payload.fullName,
