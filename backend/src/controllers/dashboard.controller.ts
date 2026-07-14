@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { dashboardRepository } from "../repositories/dashboard.repository";
+import { extractOne } from "../utils/supabase-helpers";
 
 export const dashboardController = {
   async summary(req: Request, res: Response, next: NextFunction) {
@@ -36,7 +37,7 @@ export const dashboardController = {
             recipientName: o.recipient_name,
             status: o.status,
             totalAmount: Number(o.total_amount),
-            paymentStatus: (o.payments as unknown as { status: string }[])?.[0]?.status ?? "pending",
+            paymentStatus: extractOne(o.payments as unknown as { status: string } | { status: string }[])?.status ?? "pending",
             createdAt: o.created_at,
           })),
           dailyRevenueChart: Object.entries(dailyRevenue).map(([date, total]) => ({ date, total })),

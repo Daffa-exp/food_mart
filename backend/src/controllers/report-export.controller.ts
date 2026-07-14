@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { orderRepository } from "../repositories/order.repository";
+import { extractOne } from "../utils/supabase-helpers";
 import {
   generateSalesExcel,
   generateSalesPdf,
@@ -17,7 +18,7 @@ async function buildReportData(req: Request): Promise<{ rows: SalesReportRow[]; 
 
   const rows: SalesReportRow[] = result.data.map((o) => {
     const user = o.users as unknown as { full_name: string; email: string } | null;
-    const payments = o.payments as unknown as { status: string }[] | null;
+    const payment = extractOne(o.payments as unknown as { status: string } | { status: string }[]);
     return {
       orderNumber: o.order_number,
       createdAt: o.created_at,
@@ -26,7 +27,7 @@ async function buildReportData(req: Request): Promise<{ rows: SalesReportRow[]; 
       itemCount: o.order_items?.length ?? 0,
       deliveryMethod: o.delivery_method,
       status: o.status,
-      paymentStatus: payments?.[0]?.status ?? "pending",
+      paymentStatus: payment?.status ?? "pending",
       totalAmount: Number(o.total_amount),
     };
   });

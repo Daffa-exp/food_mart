@@ -5,6 +5,7 @@ import { paymentRepository } from "../repositories/payment.repository";
 import { orderRepository } from "../repositories/order.repository";
 import { productRepository } from "../repositories/product.repository";
 import { midtransService, mapMidtransStatus } from "../services/midtrans.service";
+import { notificationRepository } from "../repositories/notification.repository";
 import { AppError } from "../middlewares/errorHandler";
 import { supabaseAdmin } from "../config/supabase";
 
@@ -42,48 +43,7 @@ export const paymentController = {
       }
 
       // Double-check ke Midtrans, jangan hanya percaya payload webhook.
-      //
-      // PENTING: dulu kode ini pakai payload.order_id untuk cek status.
-      // Itu bekerja untuk kartu kredit/VA/GoPay, TAPI menurut dokumentasi
-      // resmi Midtrans, metode DANA (dan metode BI-SNAP lainnya) WAJIB
-      // dicek pakai transaction_id, bukan order_id — kalau tetap pakai
-      // order_id, Midtrans selalu balas "Transaction doesn't exist" 404
-      // walau transaksinya valid & sudah settlement. Solusinya: selalu
-      // pakai transaction_id (sudah tersedia di payload notifikasi),
-      // yang valid untuk SEMUA metode pembayaran, tidak cuma DANA.
-      let verifiedStatus;
-      try {
-        verifiedStatus = await midtransService.getTransactionStatus(payload.transaction_id);
-      } catch (midtransErr) {
-        // PENTING: sebelumnya error apapun dari Midtrans (termasuk transaksi
-        // lama/expired yang sudah tidak ada di sisi Midtrans — respons 404
-        // "Transaction doesn't exist") membuat handler ini CRASH dengan 500,
-        // sehingga Midtrans terus menerus retry notifikasi yang sama tanpa
-        // henti. Untuk kasus "transaksi tidak ditemukan", ini bukan error
-        // yang perlu ditangani — cukup anggap order tsb gagal/expired, dan
-        // balas 200 supaya Midtrans berhenti retry.
-        const httpStatusCode = (midtransErr as { httpStatusCode?: string })?.httpStatusCode;
-        if (httpStatusCode === "404") {
-          // PENTING: JANGAN otomatis mengubah status order jadi cancelled
-          // di sini. Sandbox Midtrans kadang mengirim notifikasi duplikat
-          // atau lebih awal sebelum transaksi benar-benar ter-index di
-          // sisi mereka (race condition) — kalau order langsung ditandai
-          // cancelled saat itu, notifikasi "settlement" asli yang menyusul
-          // TIDAK akan mengubahnya lagi jadi confirmed (karena kode di
-          // bawah hanya update kalau status order masih "pending"),
-          // sehingga order yang sebenarnya berhasil malah nyangkut di
-          // status cancelled selamanya. Cukup balas 200 di sini supaya
-          // Midtrans berhenti retry; biarkan notifikasi final yang
-          // sebenarnya (settlement/expire/cancel) yang menentukan status.
-          console.warn(
-            `[Midtrans] Transaksi ${payload.order_id} belum/tidak ditemukan di Midtrans, notifikasi diabaikan tanpa mengubah status order.`
-          );
-          res.status(200).json({ success: true, message: "Diabaikan: transaksi belum/tidak ditemukan di Midtrans" });
-          return;
-        }
-        throw midtransErr;
-      }
-
+      const verifiedStatus = await midtransService.getTransactionStatus(payload.order_id);
       const mappedStatus = mapMidtransStatus(
         verifiedStatus.transaction_status,
         verifiedStatus.fraud_status
@@ -91,7 +51,7 @@ export const paymentController = {
 
       const { data: order, error } = await supabaseAdmin
         .from("orders")
-        .select("*, payments(*), order_items(*)")
+        .select("*, order_items(*)")
         .eq("order_number", payload.order_id)
         .maybeSingle();
 
@@ -99,8 +59,19 @@ export const paymentController = {
         throw new AppError(`Order dengan order_number ${payload.order_id} tidak ditemukan`, 404);
       }
 
-      const payment = order.payments?.[0];
-      if (!payment) throw new AppError("Data payment tidak ditemukan untuk order ini", 404);
+      // Diambil terpisah (bukan lewat embedded join "orders(*, payments(*))")
+      // supaya tidak bergantung pada bentuk balikan Supabase yang bisa jadi
+      // array ATAU objek tunggal tergantung constraint FK — query langsung
+      // ke tabel payments selalu jelas bentuknya (1 baris via .maybeSingle()).
+      const { data: payment, error: paymentError } = await supabaseAdmin
+        .from("payments")
+        .select("*")
+        .eq("order_id", order.id)
+        .maybeSingle();
+
+      if (paymentError || !payment) {
+        throw new AppError("Data payment tidak ditemukan untuk order ini", 404);
+      }
 
       await paymentRepository.updateStatus(payment.id, {
         status: mappedStatus,
@@ -119,8 +90,27 @@ export const paymentController = {
         for (const item of order.order_items) {
           await productRepository.decrementStock(item.product_id, item.quantity);
         }
+        await notificationRepository.create({
+          userId: order.user_id,
+          type: "payment",
+          title: "Pembayaran berhasil ✅",
+          message: `Pembayaran untuk pesanan #${order.order_number} sudah kami terima. Pesanan akan segera diproses.`,
+          referenceId: order.id,
+        });
       } else if (["expire", "cancel", "failure"].includes(mappedStatus)) {
         await orderRepository.updateStatus(order.id, "cancelled");
+        const reasonLabel: Record<string, string> = {
+          expire: "kedaluwarsa (batas waktu bayar habis)",
+          cancel: "dibatalkan",
+          failure: "gagal diproses",
+        };
+        await notificationRepository.create({
+          userId: order.user_id,
+          type: "payment",
+          title: "Pembayaran gagal ❌",
+          message: `Pembayaran untuk pesanan #${order.order_number} ${reasonLabel[mappedStatus]}. Silakan coba buat pesanan baru.`,
+          referenceId: order.id,
+        });
       }
 
       // Midtrans mewajibkan response 200 OK agar tidak retry terus.

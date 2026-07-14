@@ -7,6 +7,7 @@ import { paymentRepository } from "../repositories/payment.repository";
 import { couponRepository, calculateCouponDiscount } from "../repositories/coupon.repository";
 import { midtransService } from "../services/midtrans.service";
 import { getPricingSettings, calculateShippingFeeFromSettings } from "../utils/pricing";
+import { extractOne } from "../utils/supabase-helpers";
 import { AppError } from "../middlewares/errorHandler";
 
 export const orderController = {
@@ -182,8 +183,21 @@ const snap = await midtransService.createSnapTransaction({
 
   async getOrderById(req: Request, res: Response, next: NextFunction) {
     try {
-      const order = await orderRepository.findById(req.params.id);
-      res.json({ success: true, data: order });
+      const { id } = req.params;
+      // Tolak lebih awal kalau param jelas bukan UUID maupun format nomor
+      // order kita ("FM-2026-xxxxxx") — mis. placeholder yang belum
+      // diganti nilai asli, atau salah ketik.
+      const looksValid = /^[0-9a-f-]{36}$/i.test(id) || /^FM-\d{4}-\d+$/i.test(id);
+      if (!looksValid) {
+        return res.status(400).json({ success: false, message: "ID atau nomor order tidak valid" });
+      }
+
+      const order = await orderRepository.findById(id);
+      // Frontend (checkout/berhasil & checkout/gagal) mengakses
+      // order.payments?.[0] — normalisasi supaya selalu array, terlepas dari
+      // bentuk balikan PostgREST (lihat utils/supabase-helpers.ts).
+      const payment = extractOne(order.payments as unknown as Record<string, unknown> | Record<string, unknown>[]);
+      res.json({ success: true, data: { ...order, payments: payment ? [payment] : [] } });
     } catch (err) {
       next(err);
     }
