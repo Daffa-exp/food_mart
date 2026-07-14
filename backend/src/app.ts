@@ -47,6 +47,16 @@ import adminManagementRoutes from "./routes/admin/admin-management.routes";
 
 const app = express();
 
+// PENTING: Railway (seperti Vercel/Render/Heroku) menjalankan app di
+// belakang reverse proxy. Tanpa baris ini, Express tidak "percaya" header
+// X-Forwarded-For dari proxy tsb, yang membuat express-rate-limit di bawah
+// gagal memvalidasi IP request dengan benar (lihat warning "ValidationError:
+// X-Forwarded-For header is set but trust proxy is false" di log). Ini
+// kemungkinan besar penyebab webhook Midtrans (yang datang dari jalur
+// infrastruktur berbeda dari request browser biasa) gagal diproses dengan
+// benar oleh middleware rate-limiter, sebelum sempat mencapai route handler.
+app.set("trust proxy", 1);
+
 // ---------- Security middleware ----------
 app.use(helmet());
 app.use(
