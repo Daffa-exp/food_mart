@@ -11,6 +11,7 @@ interface AuthState {
   isInitialized: boolean;
   init: () => void;
   signInWithPassword: (email: string, password: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signUpWithPassword: (email: string, password: string, fullName: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -33,6 +34,19 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   signInWithPassword: async (email, password) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw new Error(mapAuthError(error.message));
+  },
+
+  signInWithGoogle: async () => {
+    // Ini me-redirect browser ke Google, BUKAN balik nilai session langsung
+    // (beda dari signInWithPassword). Sesi baru benar-benar didapat setelah
+    // Google redirect balik ke /auth/callback (lihat route handler-nya).
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
     if (error) throw new Error(mapAuthError(error.message));
   },
 

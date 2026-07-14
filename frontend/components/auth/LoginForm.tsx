@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import { Mail, Lock, Star, ShieldCheck, Gift } from "lucide-react";
 import toast from "react-hot-toast";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import { loginSchema, LoginFormValues } from "@/utils/validation";
@@ -15,13 +15,22 @@ import { useAuthStore } from "@/store/auth-store";
 
 export default function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const signInWithPassword = useAuthStore((s) => s.signInWithPassword);
+  const signInWithGoogle = useAuthStore((s) => s.signInWithGoogle);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<LoginFormValues>({ resolver: zodResolver(loginSchema) });
+
+  useEffect(() => {
+    if (searchParams.get("error") === "oauth_failed") {
+      toast.error("Gagal masuk dengan Google, silakan coba lagi");
+    }
+  }, [searchParams]);
 
   async function onSubmit(values: LoginFormValues) {
     setIsSubmitting(true);
@@ -34,6 +43,19 @@ export default function LoginForm() {
       toast.error(err instanceof Error ? err.message : "Gagal masuk, coba lagi");
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  async function handleGoogleLogin() {
+    setIsGoogleLoading(true);
+    try {
+      await signInWithGoogle();
+      // Tidak perlu router.push di sini — signInWithGoogle me-redirect
+      // browser ke Google, jadi baris setelah ini praktis tidak sempat
+      // jalan (kecuali kalau gagal sebelum redirect terjadi).
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal masuk dengan Google");
+      setIsGoogleLoading(false);
     }
   }
 
@@ -50,11 +72,12 @@ export default function LoginForm() {
 
       <button
         type="button"
-        onClick={() => toast("Integrasi Google Sign-In di Fase 5")}
-        className="mt-6 flex w-full items-center justify-center gap-2.5 rounded-input border border-surface-border bg-white py-3 text-sm font-medium text-ink-900 transition-colors hover:bg-surface-cream"
+        onClick={handleGoogleLogin}
+        disabled={isGoogleLoading}
+        className="mt-6 flex w-full items-center justify-center gap-2.5 rounded-input border border-surface-border bg-white py-3 text-sm font-medium text-ink-900 transition-colors hover:bg-surface-cream disabled:opacity-60"
       >
         <GoogleIcon />
-        Masuk dengan Google
+        {isGoogleLoading ? "Mengarahkan ke Google..." : "Masuk dengan Google"}
       </button>
 
       <div className="my-5 flex items-center gap-3">

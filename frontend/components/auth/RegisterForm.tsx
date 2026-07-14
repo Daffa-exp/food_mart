@@ -13,7 +13,9 @@ import { useAuthStore } from "@/store/auth-store";
 
 export default function RegisterForm() {
   const signUpWithPassword = useAuthStore((s) => s.signUpWithPassword);
+  const signInWithGoogle = useAuthStore((s) => s.signInWithGoogle);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const {
     register,
     handleSubmit,
@@ -32,6 +34,16 @@ export default function RegisterForm() {
     }
   }
 
+  async function handleGoogleLogin() {
+    setIsGoogleLoading(true);
+    try {
+      await signInWithGoogle();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal mendaftar dengan Google");
+      setIsGoogleLoading(false);
+    }
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -45,11 +57,12 @@ export default function RegisterForm() {
 
       <button
         type="button"
-        onClick={() => toast("Integrasi Google Sign-In di Fase 5")}
-        className="mt-6 flex w-full items-center justify-center gap-2.5 rounded-input border border-surface-border bg-white py-3 text-sm font-medium text-ink-900 transition-colors hover:bg-surface-cream"
+        onClick={handleGoogleLogin}
+        disabled={isGoogleLoading}
+        className="mt-6 flex w-full items-center justify-center gap-2.5 rounded-input border border-surface-border bg-white py-3 text-sm font-medium text-ink-900 transition-colors hover:bg-surface-cream disabled:opacity-60"
       >
         <GoogleIcon />
-        Daftar dengan Google
+        {isGoogleLoading ? "Mengarahkan ke Google..." : "Daftar dengan Google"}
       </button>
 
       <div className="my-5 flex items-center gap-3">

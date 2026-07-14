@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import AuthHeroPanel from "@/components/auth/AuthHeroPanel";
 import AuthTabs from "@/components/auth/AuthTabs";
 import LoginForm from "@/components/auth/LoginForm";
@@ -10,7 +11,9 @@ export default function LoginPage() {
         <div className="w-full max-w-sm">
           <AuthTabs active="masuk" />
           <div className="mt-8">
-            <LoginForm />
+            <Suspense fallback={null}>
+              <LoginForm />
+            </Suspense>
           </div>
         </div>
       </div>
