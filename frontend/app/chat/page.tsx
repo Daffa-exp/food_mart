@@ -19,7 +19,7 @@ export default function ChatPage() {
   return (
     <>
       <Navbar />
-     <main className="mx-auto flex h-[calc(100dvh-65px)] max-w-7xl flex-col px-4 py-3 sm:h-[calc(100vh-73px)] sm:py-6 sm:px-6 lg:px-8">
+  <main className="mx-auto flex h-[calc(100dvh-65px)] max-w-7xl flex-col px-4 py-3 sm:h-[calc(100vh-73px)] sm:py-6 sm:px-6 lg:px-8">
   <div className="mb-2 sm:mb-4">
     <h1 className="flex items-center gap-2 text-base font-extrabold text-ink-900 sm:text-xl md:text-2xl">
       <MessageSquareText className="h-5 w-5 text-primary-500 sm:h-6 sm:w-6" />
