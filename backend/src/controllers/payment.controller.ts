@@ -75,7 +75,12 @@ export const paymentController = {
 
 async function processPaymentNotification(payload: MidtransNotificationPayload) {
   // Double-check ke Midtrans, jangan hanya percaya payload webhook.
-  const verifiedStatus = await midtransService.getTransactionStatus(payload.order_id);
+  //
+  // PENTING: WAJIB pakai transaction_id di sini, BUKAN order_id (order_number
+  // kita). Untuk metode DANA (dan BI-SNAP lainnya), Midtrans mewajibkan
+  // transaction_id untuk endpoint status — order_id akan selalu dibalas
+  // "Transaction doesn't exist" 404 meski transaksinya valid & settlement.
+  const verifiedStatus = await midtransService.getTransactionStatus(payload.transaction_id);
   const mappedStatus = mapMidtransStatus(verifiedStatus.transaction_status, verifiedStatus.fraud_status);
 
   const { data: order, error } = await supabaseAdmin
