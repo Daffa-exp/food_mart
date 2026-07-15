@@ -47,7 +47,7 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-surface-border bg-white/95 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center gap-6 px-4 py-3 sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-7xl items-center gap-2 px-4 py-3 sm:gap-6 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="flex shrink-0 items-center gap-2">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-500 text-white">
@@ -89,7 +89,7 @@ export default function Navbar() {
         </form>
 
         {/* Icons */}
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-1 sm:gap-2">
           {/* Tombol menu HP — sebelumnya link navigasi (Beranda/Menu/Tentang
               Kami/Kontak) sepenuhnya hilang di layar kecil tanpa cara lain
               untuk membukanya. Tombol ini cuma tampil di bawah breakpoint
@@ -97,7 +97,7 @@ export default function Navbar() {
           <button
             onClick={() => setIsMobileNavOpen((o) => !o)}
             aria-label="Buka menu navigasi"
-            className="flex h-9 w-9 items-center justify-center rounded-full text-ink-700 hover:bg-surface-cream md:hidden"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-700 hover:bg-surface-cream md:hidden"
           >
             {isMobileNavOpen ? <X className="h-5 w-5" /> : <MenuIcon className="h-5 w-5" />}
           </button>
@@ -107,9 +107,9 @@ export default function Navbar() {
           <IconBadge icon={Bell} count={hasMounted ? unreadCount : 0} href="/notifikasi" label="Notifikasi" dot />
 
           {!hasMounted ? (
-            <div className="ml-1 h-9 w-9 rounded-full bg-surface-cream" />
+            <div className="ml-1 h-9 w-9 shrink-0 rounded-full bg-surface-cream" />
           ) : user ? (
-            <div className="relative ml-1">
+            <div className="relative ml-1 shrink-0">
               <button
                 onClick={() => setIsMenuOpen((o) => !o)}
                 className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-500 text-sm font-semibold text-white"
@@ -146,7 +146,7 @@ export default function Navbar() {
           ) : (
             <Link
               href="/login"
-              className="ml-1 flex items-center gap-1.5 rounded-pill bg-primary-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-600"
+              className="ml-1 flex shrink-0 items-center gap-1 rounded-pill bg-primary-500 px-2.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-primary-600 sm:gap-1.5 sm:px-4 sm:text-sm"
             >
               Masuk
             </Link>
@@ -217,7 +217,7 @@ function IconBadge({
     <Link
       href={href}
       aria-label={label}
-      className="relative flex h-9 w-9 items-center justify-center rounded-full text-ink-700 transition-colors hover:bg-surface-cream hover:text-primary-500"
+      className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-700 transition-colors hover:bg-surface-cream hover:text-primary-500"
     >
       <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
       {count > 0 && (

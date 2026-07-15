@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Star, Eye, EyeOff, Send } from "lucide-react";
 import { cn } from "@/utils/format";
 import { useAdminReviews, useAdminReviewMutations } from "@/hooks/useAdmin";
@@ -47,6 +48,22 @@ export default function AdminReviewsPage() {
               </div>
             </div>
             {r.comment && <p className="mt-3 text-sm text-ink-700">{r.comment}</p>}
+
+            {r.imageUrls && r.imageUrls.length > 0 && (
+              <div className="mt-2.5 flex flex-wrap gap-2">
+                {r.imageUrls.map((url) => (
+                  <a
+                    key={url}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="relative block h-16 w-16 overflow-hidden rounded-input border border-surface-border"
+                  >
+                    <Image src={url} alt="Foto dari pembeli" fill className="object-cover" unoptimized />
+                  </a>
+                ))}
+              </div>
+            )}
 
             {r.adminReply && (
               <div className="mt-3 rounded-input bg-primary-50 p-3 text-sm text-ink-700">

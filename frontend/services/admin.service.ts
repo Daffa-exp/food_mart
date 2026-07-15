@@ -141,7 +141,7 @@ export const adminBannerService = createCrudService<AdminBanner>("banners");
 
 export interface AdminReview {
   id: string; userName: string; productName: string; rating: number;
-  comment: string | null; adminReply: string | null; isVisible: boolean; createdAt: string;
+  comment: string | null; imageUrls: string[]; adminReply: string | null; isVisible: boolean; createdAt: string;
 }
 export const adminReviewService = {
   async list(): Promise<AdminReview[]> {

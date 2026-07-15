@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import { Star, MessageSquareText, ShieldCheck } from "lucide-react";
 import { Product } from "@/types/entities";
 import { useProductReviews } from "@/hooks/useProducts";
@@ -114,6 +115,22 @@ export default function ProductReviewsBox({ product }: { product: Product }) {
 
                 {review.comment && (
                   <p className="mt-2 text-sm leading-relaxed text-ink-700">{review.comment}</p>
+                )}
+
+                {review.imageUrls && review.imageUrls.length > 0 && (
+                  <div className="mt-2.5 flex flex-wrap gap-2">
+                    {review.imageUrls.map((url) => (
+                      <a
+                        key={url}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="relative block h-16 w-16 overflow-hidden rounded-input border border-surface-border"
+                      >
+                        <Image src={url} alt="Foto dari pembeli" fill className="object-cover" unoptimized />
+                      </a>
+                    ))}
+                  </div>
                 )}
 
                 {review.adminReply && (

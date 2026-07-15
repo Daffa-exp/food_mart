@@ -23,7 +23,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="id" className={fontSans.variable}>
-      <body>
+      <body className="overflow-x-hidden">
         <AppProviders>{children}</AppProviders>
         <FloatingScrollTop />
       </body>

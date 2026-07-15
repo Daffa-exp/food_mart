@@ -24,6 +24,7 @@ router.get("/", async (_req: Request, res: Response, next: NextFunction) => {
         productName: (r.products as unknown as { name: string })?.name ?? "-",
         rating: r.rating,
         comment: r.comment,
+        imageUrls: r.image_urls ?? [],
         adminReply: r.admin_reply,
         isVisible: r.is_visible,
         createdAt: r.created_at,

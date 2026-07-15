@@ -6,6 +6,7 @@ export interface MyReview {
   orderItemId: string;
   rating: number;
   comment: string | null;
+  imageUrls: string[];
   adminReply: string | null;
   createdAt: string;
 }
@@ -14,6 +15,7 @@ export interface CreateReviewPayload {
   orderItemId: string;
   rating: number;
   comment?: string;
+  imageUrls?: string[];
 }
 
 export interface ProductReview {
@@ -21,6 +23,7 @@ export interface ProductReview {
   userName: string;
   rating: number;
   comment: string | null;
+  imageUrls: string[];
   adminReply: string | null;
   createdAt: string;
 }
