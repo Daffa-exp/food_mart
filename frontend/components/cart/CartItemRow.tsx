@@ -46,7 +46,7 @@ export default function CartItemRow({ line }: { line: CartLine }) {
 
       <div className="flex flex-1 flex-col justify-between">
         <div className="flex items-start justify-between gap-2">
-          <div>
+          <div className="min-w-0 flex-1">
             <Link href={`/menu/${line.slug}`} className="text-sm font-semibold text-ink-900 hover:text-primary-500">
               {line.name}
             </Link>

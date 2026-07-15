@@ -26,14 +26,13 @@ import reviewRoutes from "./routes/review.routes";
 import chatRoutes from "./routes/chat.routes";
 import bannerRoutes from "./routes/banner.routes";
 import promotionRoutes from "./routes/promotion.routes";
-import settingsRoutes from "./routes/settings.routes";
 // Admin Panel routes
 import adminDashboardRoutes from "./routes/admin/dashboard.routes";
 import adminAdminRoutes from "./routes/admin/admin.routes";
 import adminProductRoutes from "./routes/admin/product.routes";
+import adminUploadRoutes from "./routes/admin/upload.routes";
 import adminCategoryRoutes from "./routes/admin/category.routes";
 import adminOrderRoutes from "./routes/admin/order.routes";
-import adminReportRoutes from "./routes/admin/report.routes";
 import adminCouponRoutes from "./routes/admin/coupon.routes";
 import adminPromotionRoutes from "./routes/admin/promotion.routes";
 import adminBannerRoutes from "./routes/admin/banner.routes";
@@ -110,15 +109,14 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/banners", bannerRoutes);
 app.use("/api/promotions", promotionRoutes);
-app.use("/api/settings", settingsRoutes);
 
 // ---------- Admin Panel routes (semua di-guard requireAdmin di masing-masing router) ----------
 app.use("/api/admin/dashboard", adminDashboardRoutes);
 app.use("/api/admin", adminAdminRoutes); // -> /api/admin/me
 app.use("/api/admin/products", adminProductRoutes);
+app.use("/api/admin/uploads", adminUploadRoutes);
 app.use("/api/admin/categories", adminCategoryRoutes);
 app.use("/api/admin/orders", adminOrderRoutes);
-app.use("/api/admin/reports", adminReportRoutes);
 app.use("/api/admin/coupons", adminCouponRoutes);
 app.use("/api/admin/promotions", adminPromotionRoutes);
 app.use("/api/admin/banners", adminBannerRoutes);

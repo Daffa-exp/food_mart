@@ -101,6 +101,10 @@ export default function ProductCard({ product }: ProductCardProps) {
             aria-label={justAdded ? "Ditambahkan ke keranjang" : "Tambah ke keranjang"}
             className={cn(
               "flex shrink-0 items-center justify-center gap-1 rounded-full bg-primary-500 text-white transition-colors hover:bg-primary-600 disabled:cursor-not-allowed disabled:bg-ink-400",
+              // Mobile: tombol bulat kecil, cuma ikon (supaya tidak
+              // kepotong/overflow di grid 2 kolom yang sempit). Mulai
+              // breakpoint sm ke atas (kartu sudah lebih lebar), tombol
+              // melebar dan menampilkan teks labelnya.
               "h-9 w-9 sm:h-auto sm:w-auto sm:rounded-pill sm:px-3 sm:py-2 sm:text-xs sm:font-semibold",
               justAdded && "bg-success-500 hover:bg-success-500"
             )}

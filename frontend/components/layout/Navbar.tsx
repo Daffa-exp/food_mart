@@ -77,7 +77,7 @@ export default function Navbar() {
         </nav>
 
         {/* Search */}
-        <form onSubmit={handleSearchSubmit} className="relative ml-auto hidden max-w-sm flex-1 sm:block">
+        <form onSubmit={handleSearchSubmit} className="relative hidden max-w-sm flex-1 sm:block">
           <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
           <input
             value={search}
@@ -89,7 +89,11 @@ export default function Navbar() {
         </form>
 
         {/* Icons */}
-        <div className="flex items-center gap-2 sm:ml-2">
+        <div className="ml-auto flex items-center gap-2">
+          {/* Tombol menu HP — sebelumnya link navigasi (Beranda/Menu/Tentang
+              Kami/Kontak) sepenuhnya hilang di layar kecil tanpa cara lain
+              untuk membukanya. Tombol ini cuma tampil di bawah breakpoint
+              md, membuka panel berisi link + search. */}
           <button
             onClick={() => setIsMobileNavOpen((o) => !o)}
             aria-label="Buka menu navigasi"
@@ -150,6 +154,8 @@ export default function Navbar() {
         </div>
       </div>
 
+      {/* Panel menu HP: link navigasi + search — cuma dipakai di bawah
+          breakpoint md, dibuka lewat tombol hamburger di atas. */}
       <AnimatePresence>
         {isMobileNavOpen && (
           <motion.div

@@ -27,7 +27,6 @@ export function useDashboardSummary() {
   return useQuery({
     queryKey: ["admin-dashboard-summary"],
     queryFn: () => adminDashboardService.getSummary(),
-    refetchInterval: 15000,
   });
 }
 
@@ -79,11 +78,7 @@ export function useAdminProductMutations() {
   const updateStock = useMutation({
     mutationFn: ({ id, quantity, note }: { id: string; quantity: number; note?: string }) =>
       adminProductService.updateStock(id, quantity, note),
-    onSuccess: () => {
-      invalidate();
-      queryClient.invalidateQueries({ queryKey: ["admin-inventory"] });
-      toast.success("Stok berhasil diperbarui");
-    },
+    onSuccess: () => { invalidate(); toast.success("Stok berhasil diperbarui"); },
     onError: (e: Error) => toast.error(e.message || "Gagal memperbarui stok"),
   });
 
@@ -101,7 +96,7 @@ export function useAdminCategoryMutations() {
   const queryClient = useQueryClient();
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["admin-categories"] });
-    queryClient.invalidateQueries({ queryKey: ["categories"] });
+    queryClient.invalidateQueries({ queryKey: ["categories"] }); // dipakai juga di sisi customer
   };
 
   const create = useMutation({
@@ -130,6 +125,17 @@ export function useAdminOrders(params: AdminOrderListParams) {
   return useQuery({
     queryKey: ["admin-orders", params],
     queryFn: () => adminOrderService.list(params),
+    // Poll berkala supaya perubahan status dari webhook Midtrans (pembayaran
+    // settlement/gagal) langsung kelihatan di sini tanpa admin harus manual
+    // refresh halaman.
+    //
+    // PENTING: refetchIntervalInBackground WAJIB true di sini. Defaultnya
+    // false, artinya React Query BERHENTI polling saat tab admin ini tidak
+    // aktif (mis. admin pindah tab untuk menyelesaikan pembayaran test).
+    // Karena refetchOnWindowFocus juga sengaja dimatikan secara global di
+    // app ini, balik ke tab admin TIDAK otomatis memicu refresh instan —
+    // jadi tanpa opsi ini, status bisa kelihatan "macet" sampai admin
+    // reload manual.
     refetchInterval: 15000,
     refetchIntervalInBackground: true,
   });
@@ -268,7 +274,7 @@ export function useAdminInventory(lowStockOnly = false) {
 }
 
 export function useAdminInventoryMutations() {
-  return useAdminProductMutations();
+  return useAdminProductMutations(); // updateStock sudah ada di sana
 }
 
 export function useAdminAccounts() {

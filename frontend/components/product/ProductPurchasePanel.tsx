@@ -34,8 +34,8 @@ export default function ProductPurchasePanel({ product }: { product: Product }) 
         <span className="text-ink-400">Terjual {product.soldCount.toLocaleString("id-ID")}+</span>
       </div>
 
-      <div className="mt-4 flex items-baseline gap-2">
-        <span className="text-2xl font-extrabold text-ink-900">{formatRupiah(product.finalPrice)}</span>
+      <div className="mt-4 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        <span className="text-xl font-extrabold text-ink-900 sm:text-2xl">{formatRupiah(product.finalPrice)}</span>
         {product.discountPercentage > 0 && (
           <>
             <span className="text-sm text-ink-400 line-through">{formatRupiah(product.price)}</span>

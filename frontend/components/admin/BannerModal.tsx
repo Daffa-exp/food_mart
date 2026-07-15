@@ -19,7 +19,6 @@ export default function BannerModal({
   const [form, setForm] = useState({
     title: initialData?.title ?? "",
     imageUrl: initialData?.imageUrl ?? "",
-    videoUrl: initialData?.videoUrl ?? "",
     linkUrl: initialData?.linkUrl ?? "",
     displayOrder: initialData?.displayOrder ?? 0,
     isActive: initialData?.isActive ?? true,
@@ -27,8 +26,8 @@ export default function BannerModal({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.imageUrl && !form.videoUrl) {
-      alert("Isi minimal salah satu: upload gambar banner, atau isi link video (YouTube/Vimeo)");
+    if (!form.imageUrl) {
+      alert("Upload gambar banner terlebih dahulu (atau masukkan URL opsional)");
       return;
     }
     onSubmit({ ...form, displayOrder: Number(form.displayOrder) });
@@ -44,23 +43,11 @@ export default function BannerModal({
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input label="Judul" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
           <ImageUploader
-            label="Gambar Banner (opsional kalau isi link video)"
+            label="Gambar Banner *"
             value={form.imageUrl}
             onChange={(url) => setForm({ ...form, imageUrl: url })}
             folder="banners"
           />
-          <div>
-            <Input
-              label="Link Video — YouTube/Vimeo (opsional)"
-              placeholder="https://www.youtube.com/watch?v=..."
-              value={form.videoUrl}
-              onChange={(e) => setForm({ ...form, videoUrl: e.target.value })}
-            />
-            <p className="mt-1 text-xs text-ink-400">
-              Kalau diisi, banner ini akan tampil sebagai video yang bisa diputar
-              di homepage (menggantikan gambar).
-            </p>
-          </div>
           <Input label="URL Tujuan (opsional)" value={form.linkUrl} onChange={(e) => setForm({ ...form, linkUrl: e.target.value })} />
           <Input label="Urutan Tampil" type="number" value={form.displayOrder} onChange={(e) => setForm({ ...form, displayOrder: Number(e.target.value) })} />
           <label className="flex items-center gap-2 text-sm text-ink-700">

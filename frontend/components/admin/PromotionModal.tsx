@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import AnimatedModal from "@/components/ui/AnimatedModal";
+import ImageUploader from "@/components/ui/ImageUploader";
 import { AdminPromotion } from "@/services/admin.service";
 
 export default function PromotionModal({
@@ -40,7 +41,12 @@ export default function PromotionModal({
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input label="Judul" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
           <Input label="Deskripsi" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-          <Input label="URL Banner" value={form.bannerImageUrl} onChange={(e) => setForm({ ...form, bannerImageUrl: e.target.value })} />
+          <ImageUploader
+            label="Gambar Banner Promosi"
+            value={form.bannerImageUrl}
+            onChange={(url) => setForm({ ...form, bannerImageUrl: url })}
+            folder="banners"
+          />
           <Input label="Diskon (%)" type="number" value={form.discountPercentage ?? ""} onChange={(e) => setForm({ ...form, discountPercentage: Number(e.target.value) })} />
           <div className="grid grid-cols-2 gap-3">
             <Input label="Mulai" type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} />
