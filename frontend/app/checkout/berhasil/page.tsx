@@ -13,6 +13,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import OrderStatusLive from "@/components/checkout/OrderStatusLive";
+import PaymentInfoLive from "@/components/checkout/PaymentInfoLive";
 import Button from "@/components/ui/Button";
 import { formatRupiah } from "@/utils/format";
 import { orderService } from "@/services/order.service";
@@ -194,41 +195,13 @@ export default async function PaymentSuccessPage({
                       })}
                     </dd>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <dt className="text-ink-400">Metode Pembayaran</dt>
-                    <dd>
-                      <span className="rounded-pill bg-primary-50 px-2 py-0.5 text-xs font-semibold text-primary-500">
-                        {order.payments?.[0]?.payment_method?.toUpperCase() ?? "-"}
-                      </span>
-                    </dd>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <dt className="text-ink-400">Status Pembayaran</dt>
-                    <dd>
-                      {(() => {
-                        const payStatus = order.payments?.[0]?.status;
-                        const isPaid = payStatus === "settlement";
-                        const isFailed = payStatus === "deny" || payStatus === "cancel" || payStatus === "expire";
-                        const label = isPaid
-                          ? "Berhasil"
-                          : isFailed
-                            ? "Gagal"
-                            : payStatus === "pending"
-                              ? "Menunggu"
-                              : (payStatus ?? "-");
-                        const className = isPaid
-                          ? "bg-success-50 text-success-500"
-                          : isFailed
-                            ? "bg-red-50 text-red-500"
-                            : "bg-amber-50 text-amber-600";
-                        return (
-                          <span className={`rounded-pill px-2 py-0.5 text-xs font-semibold ${className}`}>
-                            {label}
-                          </span>
-                        );
-                      })()}
-                    </dd>
-                  </div>
+                  <PaymentInfoLive
+                    orderId={order.id}
+                    initialStatus={order.status}
+                    initialIsPaid={order.payments?.[0]?.status === "settlement"}
+                    initialPaymentMethod={order.payments?.[0]?.payment_method ?? null}
+                    initialPaymentStatus={order.payments?.[0]?.status ?? null}
+                  />
                   <div className="flex items-center justify-between">
                     <dt className="text-ink-400">Estimasi Pengiriman</dt>
                     <dd className="font-medium text-ink-900">
