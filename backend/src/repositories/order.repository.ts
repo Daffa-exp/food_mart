@@ -1,6 +1,27 @@
 import { supabaseAdmin } from "../config/supabase";
 import { AppError } from "../middlewares/errorHandler";
 
+// PENTING: kolom payments.order_id punya constraint UNIQUE (lihat
+// 001_initial_schema.sql), jadi relasinya one-to-one. Karena itu Supabase
+// SELALU balikin "payments" hasil embedded select ("*, payments(*)") sebagai
+// OBJEK TUNGGAL (atau null kalau belum ada payment), BUKAN array — beda
+// dengan order_items yang emang one-to-many dan selalu array.
+//
+// Tapi seluruh frontend (dan sebagian kode di sini) menulis akses dengan
+// asumsi array, mis. "order.payments?.[0]?.status". Kalau dibiarkan, akses
+// itu SELALU undefined walau datanya ada, dan gejalanya: metode/status
+// pembayaran di UI tidak pernah ke-update walau pembayaran sudah settlement
+// di database. Daripada mengubah setiap tempat yang mengakses ".payments",
+// dinormalisasi sekali di sini: setiap order yang keluar dari repository
+// ini SELALU punya "payments" berbentuk array (isi 0 atau 1 item).
+function normalizeOrderPayments<T extends { payments?: unknown }>(order: T): T {
+  const raw = order.payments;
+  return {
+    ...order,
+    payments: raw == null ? [] : Array.isArray(raw) ? raw : [raw],
+  };
+}
+
 export interface CreateOrderInput {
   userId: string;
   orderNumber: string;
@@ -98,7 +119,7 @@ export const orderRepository = {
 
     if (error) throw new AppError(`Gagal mengambil order: ${error.message}`, 500);
     if (!data) throw new AppError("Order tidak ditemukan", 404);
-    return data;
+    return normalizeOrderPayments(data);
   },
 
   async findByUserId(userId: string) {
@@ -109,7 +130,7 @@ export const orderRepository = {
       .order("created_at", { ascending: false });
 
     if (error) throw new AppError(`Gagal mengambil riwayat order: ${error.message}`, 500);
-    return data ?? [];
+    return (data ?? []).map(normalizeOrderPayments);
   },
 
   async listForAdmin(params: {
@@ -136,7 +157,7 @@ export const orderRepository = {
 
     const { data, error, count } = await query.order("created_at", { ascending: false }).range(from, to);
     if (error) throw new AppError(`Gagal mengambil daftar order: ${error.message}`, 500);
-    return { data: data ?? [], total: count ?? 0, page, pageSize };
+    return { data: (data ?? []).map(normalizeOrderPayments), total: count ?? 0, page, pageSize };
   },
 
   async updateStatus(orderId: string, status: string) {
