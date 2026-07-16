@@ -88,9 +88,9 @@ export default function OrderHistoryCard({ order }: { order: Order }) {
           productName={reviewingItem.productName}
           isSubmitting={submitReview.isPending}
           onClose={() => setReviewingItem(null)}
-          onSubmit={({ rating, comment }) =>
+          onSubmit={({ rating, comment, photos }) =>
             submitReview.mutate(
-              { orderItemId: reviewingItem.id, rating, comment: comment || undefined },
+              { orderItemId: reviewingItem.id, rating, comment: comment || undefined, photos },
               { onSuccess: () => setReviewingItem(null) }
             )
           }
