@@ -9,7 +9,7 @@ const createReviewSchema = z.object({
   orderItemId: z.string().uuid("orderItemId tidak valid"),
   rating: z.number().int().min(1, "Rating minimal 1").max(5, "Rating maksimal 5"),
   comment: z.string().max(1000).optional(),
-  imageUrls: z.array(z.string().url()).max(3, "Maksimal 3 foto per ulasan").optional(),
+  photos: z.array(z.string().url()).max(5, "Maksimal 5 foto per ulasan").optional(),
 });
 
 function toDTO(row: Record<string, unknown>) {
@@ -19,7 +19,7 @@ function toDTO(row: Record<string, unknown>) {
     orderItemId: row.order_item_id,
     rating: row.rating,
     comment: row.comment,
-    imageUrls: row.image_urls ?? [],
+    photos: row.photos ?? [],
     adminReply: row.admin_reply,
     createdAt: row.created_at,
   };
@@ -41,7 +41,7 @@ router.get("/", optionalAuth, async (req: Request, res: Response, next: NextFunc
         userName: (r.users as unknown as { full_name: string } | null)?.full_name ?? "Pengguna",
         rating: r.rating,
         comment: r.comment,
-        imageUrls: r.image_urls ?? [],
+        photos: r.photos ?? [],
         adminReply: r.admin_reply,
         createdAt: r.created_at,
       })),
@@ -83,7 +83,7 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
       orderItemId: payload.orderItemId,
       rating: payload.rating,
       comment: payload.comment,
-      imageUrls: payload.imageUrls,
+      photos: payload.photos,
     });
 
     res.status(201).json({ success: true, message: "Terima kasih atas rating & komentarnya!", data: toDTO(review) });

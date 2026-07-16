@@ -1,15 +1,23 @@
 import { apiClient } from "@/services/api-client";
 
 export const uploadService = {
-  async uploadImage(file: File, folder: "banners" | "products" | "avatars" | "misc" | "reviews" = "misc") {
+  // Dipakai di Admin Panel (produk, banner, kategori, dll) — butuh akun admin.
+  async uploadImage(file: File, folder: "banners" | "products" | "avatars" | "misc" = "misc") {
     const form = new FormData();
     form.append("file", file);
 
-    // Folder "reviews" dipakai customer biasa (bukan admin) — lewat endpoint
-    // /uploads (requireAuth), bukan /admin/uploads (requireAdmin).
-    const basePath = folder === "reviews" ? "/uploads" : "/admin/uploads";
+    const { data } = await apiClient.post(`/admin/uploads?folder=${folder}`, form, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return data.data as { url: string; path: string };
+  },
 
-    const { data } = await apiClient.post(`${basePath}?folder=${folder}`, form, {
+  // Dipakai customer biasa (bukan admin) — dipakai untuk foto ulasan produk.
+  async uploadCustomerImage(file: File, folder: "reviews" | "avatars" = "reviews") {
+    const form = new FormData();
+    form.append("file", file);
+
+    const { data } = await apiClient.post(`/uploads?folder=${folder}`, form, {
       headers: { "Content-Type": "multipart/form-data" },
     });
     return data.data as { url: string; path: string };

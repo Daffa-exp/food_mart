@@ -6,8 +6,10 @@ import { env } from "../config/env";
 import { requireAuth } from "../middlewares/auth.middleware";
 import { AppError } from "../middlewares/errorHandler";
 
-// Sengaja dipisah dari admin/upload.routes.ts (yang dilindungi requireAdmin)
-// karena upload foto ulasan dilakukan oleh CUSTOMER biasa, bukan admin.
+// Endpoint upload untuk PENGGUNA BIASA (bukan admin) — dipakai saat ini untuk
+// foto ulasan produk. Sengaja dipisah dari /admin/uploads (yang wajib admin)
+// karena customer jelas bukan admin, jadi kalau dipaksa pakai endpoint admin
+// akan selalu gagal 403 "Forbidden".
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
@@ -21,11 +23,12 @@ const upload = multer({
   },
 });
 
-// Folder yang boleh dipakai customer — dibatasi (tidak sebebas admin) supaya
-// customer tidak bisa menaruh file di folder "banners"/"products" dsb.
-const ALLOWED_CUSTOMER_FOLDERS = ["reviews", "avatars"];
+// Folder yang boleh diisi user biasa — dibatasi ketat supaya tidak
+// disalahgunakan untuk menimpa folder lain (mis. "products", "banners").
+const ALLOWED_FOLDERS = ["reviews", "avatars"] as const;
 
 let bucketReadyChecked = false;
+
 async function ensureBucketExists() {
   if (bucketReadyChecked) return;
   const { error: getError } = await supabaseAdmin.storage.getBucket(env.SUPABASE_STORAGE_BUCKET);
@@ -48,16 +51,15 @@ router.post("/", upload.single("file"), async (req: Request, res: Response, next
   try {
     if (!req.file) throw new AppError("File gambar tidak ditemukan", 400);
 
-    const folder = (req.query.folder as string) || "reviews";
-    if (!ALLOWED_CUSTOMER_FOLDERS.includes(folder)) {
-      throw new AppError(`Folder upload tidak diizinkan untuk customer`, 403);
+    const folderParam = (req.query.folder as string) || "reviews";
+    if (!ALLOWED_FOLDERS.includes(folderParam as (typeof ALLOWED_FOLDERS)[number])) {
+      throw new AppError(`Folder upload tidak diizinkan untuk pengguna biasa`, 403);
     }
 
     await ensureBucketExists();
 
-    const safeFolder = folder.replace(/[^a-z0-9_-]/gi, "");
     const ext = (req.file.originalname.split(".").pop() || "jpg").toLowerCase();
-    const path = `${safeFolder}/${req.user!.authId}-${Date.now()}-${randomUUID()}.${ext}`;
+    const path = `${folderParam}/${req.user!.authId}/${Date.now()}-${randomUUID()}.${ext}`;
 
     const { error: uploadError } = await supabaseAdmin.storage
       .from(env.SUPABASE_STORAGE_BUCKET)

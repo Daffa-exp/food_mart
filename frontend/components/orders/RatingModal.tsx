@@ -1,22 +1,14 @@
 "use client";
 
 import { useRef, useState } from "react";
-import Image from "next/image";
-import { Star, X, Camera, ImagePlus, Loader2, MessageSquareHeart } from "lucide-react";
+import { Star, X, ImagePlus, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import AnimatedModal from "@/components/ui/AnimatedModal";
 import Button from "@/components/ui/Button";
 import { cn } from "@/utils/format";
 import { uploadService } from "@/services/upload.service";
 
-const MAX_PHOTOS = 3;
-const RATING_LABEL: Record<number, string> = {
-  1: "Sangat Kurang",
-  2: "Kurang",
-  3: "Cukup",
-  4: "Baik",
-  5: "Luar Biasa!",
-};
+const MAX_PHOTOS = 5;
 
 export default function RatingModal({
   productName,
@@ -26,50 +18,44 @@ export default function RatingModal({
 }: {
   productName: string;
   onClose: () => void;
-  onSubmit: (payload: { rating: number; comment: string; imageUrls: string[] }) => void;
+  onSubmit: (payload: { rating: number; comment: string; photos: string[] }) => void;
   isSubmitting: boolean;
 }) {
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState("");
   const [photos, setPhotos] = useState<string[]>([]);
-  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
-
-  const galleryInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (rating === 0) return;
-    onSubmit({ rating, comment, imageUrls: photos });
+    onSubmit({ rating, comment, photos });
   }
 
-  async function handlePickFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
+  async function handleFilesSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
     e.target.value = ""; // supaya bisa pilih file yang sama lagi kalau perlu
-    if (!file) return;
+    if (files.length === 0) return;
 
-    if (photos.length >= MAX_PHOTOS) {
+    const remainingSlots = MAX_PHOTOS - photos.length;
+    if (remainingSlots <= 0) {
       toast.error(`Maksimal ${MAX_PHOTOS} foto per ulasan`);
       return;
     }
-    if (!file.type.startsWith("image/")) {
-      toast.error("File harus berupa gambar");
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Ukuran foto maksimal 5MB");
-      return;
-    }
 
-    setIsUploadingPhoto(true);
+    const filesToUpload = files.slice(0, remainingSlots);
+    setIsUploading(true);
     try {
-      const result = await uploadService.uploadImage(file, "reviews");
-      setPhotos((prev) => [...prev, result.url]);
+      const uploaded = await Promise.all(
+        filesToUpload.map((file) => uploadService.uploadCustomerImage(file, "reviews"))
+      );
+      setPhotos((prev) => [...prev, ...uploaded.map((u) => u.url)]);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal upload foto");
     } finally {
-      setIsUploadingPhoto(false);
+      setIsUploading(false);
     }
   }
 
@@ -80,23 +66,17 @@ export default function RatingModal({
   return (
     <AnimatedModal onClose={onClose}>
       <div className="w-full max-w-md rounded-card bg-white p-6">
-        <div className="mb-1 flex items-start justify-between">
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary-500">
-              <MessageSquareHeart className="h-5 w-5" />
-            </span>
-            <div>
-              <h3 className="text-lg font-bold text-ink-900">Beri Rating</h3>
-              <p className="text-sm text-ink-700">{productName}</p>
-            </div>
-          </div>
-          <button type="button" onClick={onClose} className="rounded-full p-1 text-ink-400 hover:bg-surface-cream hover:text-ink-700">
-            <X className="h-5 w-5" />
+        <div className="mb-1 flex items-center justify-between">
+          <h3 className="text-lg font-bold text-ink-900">Beri Rating</h3>
+          <button type="button" onClick={onClose}>
+            <X className="h-5 w-5 text-ink-400" />
           </button>
         </div>
+        <p className="mb-5 text-sm text-ink-700">{productName}</p>
 
-        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
-          <div className="flex flex-col items-center rounded-input bg-surface-cream/60 py-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="mb-2 block text-sm font-medium text-ink-900">Rating *</label>
             <div className="flex items-center gap-1.5">
               {[1, 2, 3, 4, 5].map((value) => (
                 <button
@@ -106,11 +86,10 @@ export default function RatingModal({
                   onMouseLeave={() => setHoverRating(0)}
                   onClick={() => setRating(value)}
                   aria-label={`${value} bintang`}
-                  className="transition-transform hover:scale-110"
                 >
                   <Star
                     className={cn(
-                      "h-9 w-9 transition-colors",
+                      "h-8 w-8 transition-colors",
                       (hoverRating || rating) >= value
                         ? "fill-primary-500 text-primary-500"
                         : "fill-transparent text-surface-border"
@@ -119,9 +98,9 @@ export default function RatingModal({
                 </button>
               ))}
             </div>
-            <p className={cn("mt-2 text-sm font-semibold", rating > 0 ? "text-primary-500" : "text-ink-400")}>
-              {RATING_LABEL[hoverRating || rating] ?? "Ketuk bintang untuk memberi rating"}
-            </p>
+            {rating === 0 && (
+              <p className="mt-1.5 text-xs text-ink-400">Ketuk bintang untuk memberi rating</p>
+            )}
           </div>
 
           <div>
@@ -139,35 +118,15 @@ export default function RatingModal({
             <label className="mb-1.5 block text-sm font-medium text-ink-900">
               Foto <span className="font-normal text-ink-400">(opsional, maks {MAX_PHOTOS})</span>
             </label>
-
-            {/* Dua input file tersembunyi: satu buat buka kamera langsung
-                (capture="environment"), satu lagi buka galeri biasa. Dipisah
-                jadi 2 tombol supaya pilihannya jelas, bukan bergantung ke
-                perilaku browser yang beda-beda kalau digabung jadi 1 input. */}
-            <input
-              ref={cameraInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={handlePickFile}
-              className="hidden"
-            />
-            <input
-              ref={galleryInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handlePickFile}
-              className="hidden"
-            />
-
             <div className="flex flex-wrap gap-2">
               {photos.map((url) => (
                 <div key={url} className="group relative h-16 w-16 overflow-hidden rounded-input border border-surface-border">
-                  <Image src={url} alt="Foto ulasan" fill className="object-cover" unoptimized />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={url} alt="Foto ulasan" className="h-full w-full object-cover" />
                   <button
                     type="button"
                     onClick={() => removePhoto(url)}
-                    className="absolute right-0.5 top-0.5 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-black/70 text-white transition-colors hover:bg-red-500"
+                    className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-ink-900/70 text-white"
                     aria-label="Hapus foto"
                   >
                     <X className="h-2.5 w-2.5" />
@@ -176,32 +135,35 @@ export default function RatingModal({
               ))}
 
               {photos.length < MAX_PHOTOS && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => cameraInputRef.current?.click()}
-                    disabled={isUploadingPhoto}
-                    className="flex h-16 w-16 flex-col items-center justify-center gap-0.5 rounded-input border border-dashed border-surface-border text-ink-400 transition-colors hover:border-primary-400 hover:bg-primary-50 hover:text-primary-500 disabled:opacity-50"
-                  >
-                    {isUploadingPhoto ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
-                    <span className="text-[10px] font-medium">Kamera</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => galleryInputRef.current?.click()}
-                    disabled={isUploadingPhoto}
-                    className="flex h-16 w-16 flex-col items-center justify-center gap-0.5 rounded-input border border-dashed border-surface-border text-ink-400 transition-colors hover:border-primary-400 hover:bg-primary-50 hover:text-primary-500 disabled:opacity-50"
-                  >
-                    {isUploadingPhoto ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
-                    <span className="text-[10px] font-medium">Galeri</span>
-                  </button>
-                </>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="flex h-16 w-16 flex-col items-center justify-center gap-1 rounded-input border border-dashed border-surface-border text-ink-400 transition-colors hover:border-primary-300 hover:text-primary-500 disabled:opacity-50"
+                >
+                  {isUploading ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <>
+                      <ImagePlus className="h-5 w-5" />
+                      <span className="text-[10px]">Tambah</span>
+                    </>
+                  )}
+                </button>
               )}
             </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              multiple
+              onChange={handleFilesSelected}
+              className="hidden"
+            />
           </div>
 
-          <div className="flex gap-3 pt-2">
-            <Button type="submit" disabled={isSubmitting || rating === 0 || isUploadingPhoto} fullWidth>
+          <div className="flex gap-3 pt-1">
+            <Button type="submit" disabled={isSubmitting || isUploading || rating === 0}>
               {isSubmitting ? "Mengirim..." : "Kirim Rating"}
             </Button>
             <Button type="button" variant="outline" onClick={onClose}>
