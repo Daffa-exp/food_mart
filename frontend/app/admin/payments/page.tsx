@@ -51,6 +51,7 @@ export default function AdminPaymentsPage() {
           </select>
         </div>
 
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-surface-border text-left text-xs uppercase tracking-wide text-ink-400">
@@ -82,6 +83,7 @@ export default function AdminPaymentsPage() {
             {data?.data.length === 0 && <tr><td colSpan={6} className="px-4 py-8 text-center text-ink-700">Belum ada transaksi.</td></tr>}
           </tbody>
         </table>
+        </div>
 
         {data && <AdminPagination page={page} pageSize={PAGE_SIZE} total={data.total} onPageChange={setPage} />}
       </div>

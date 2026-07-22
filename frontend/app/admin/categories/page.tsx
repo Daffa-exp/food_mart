@@ -42,7 +42,7 @@ export default function AdminCategoriesPage() {
         </Button>
       </div>
 
-      <div className="rounded-card border border-surface-border bg-white">
+      <div className="rounded-card border border-surface-border bg-white overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-surface-border text-left text-xs uppercase tracking-wide text-ink-400">
