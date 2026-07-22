@@ -180,6 +180,65 @@ const snap = await midtransService.createSnapTransaction({
     }
   },
 
+  /**
+   * "Bayar Sekarang" — dipanggil dari halaman Riwayat Pesanan / Menunggu
+   * Pembayaran saat customer sempat menutup popup Snap sebelum selesai.
+   * Snap token lama biasanya sudah kedaluwarsa, jadi di sini kita minta
+   * token BARU ke Midtrans untuk order_number yang SAMA (bukan bikin order
+   * baru) — supaya stok/harga yang sudah dikunci di order awal tetap valid,
+   * dan customer tidak perlu ulang isi form checkout dari nol.
+   */
+  async resumePayment(req: Request, res: Response, next: NextFunction) {
+    try {
+      const user = await userRepository.findOrCreateByAuthId(req.user!.authId);
+      const order = await orderRepository.findById(req.params.id);
+
+      if (order.user_id !== user.id) {
+        throw new AppError("Pesanan ini bukan milik akun Anda", 403);
+      }
+      if (order.status !== "pending") {
+        throw new AppError("Pesanan ini sudah tidak bisa dibayar ulang", 400);
+      }
+
+      const payment = order.payments?.[0];
+      if (!payment) throw new AppError("Data pembayaran untuk pesanan ini tidak ditemukan", 404);
+      if (payment.status !== "pending") {
+        throw new AppError(`Pesanan ini sudah berstatus "${payment.status}", tidak bisa dibayar ulang`, 400);
+      }
+
+      // Item detail disederhanakan jadi satu baris (bukan rekonstruksi
+      // rincian ongkir/diskon/biaya layanan seperti saat createOrder) —
+      // supaya tidak ada risiko total baru meleset dari total_amount yang
+      // sudah tersimpan di order. Nama produk asli tetap ditampilkan di
+      // aplikasi kita sendiri (order detail), Midtrans di sini cuma perlu
+      // tahu total tagihannya.
+      const snap = await midtransService.createSnapTransaction({
+        orderId: order.order_number,
+        internalOrderId: order.id,
+        grossAmount: Math.round(Number(order.total_amount)),
+        customer: {
+          firstName: order.recipient_name,
+          email: req.user!.email,
+          phone: order.recipient_phone,
+        },
+        items: [
+          {
+            id: order.order_number,
+            name: `Pembayaran Pesanan #${order.order_number}`,
+            price: Math.round(Number(order.total_amount)),
+            quantity: 1,
+          },
+        ],
+      });
+
+      await paymentRepository.updateSnapToken(payment.id, snap.token);
+
+      res.json({ success: true, data: { snapToken: snap.token } });
+    } catch (err) {
+      next(err);
+    }
+  },
+
   async getOrderById(req: Request, res: Response, next: NextFunction) {
     try {
       const order = await orderRepository.findById(req.params.id);

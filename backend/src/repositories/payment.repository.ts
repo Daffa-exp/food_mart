@@ -70,6 +70,14 @@ export const paymentRepository = {
     if (error) throw new AppError(`Gagal memperbarui status pembayaran: ${error.message}`, 500);
   },
 
+  async updateSnapToken(paymentId: string, snapToken: string) {
+    const { error } = await supabaseAdmin
+      .from("payments")
+      .update({ snap_token: snapToken })
+      .eq("id", paymentId);
+    if (error) throw new AppError(`Gagal memperbarui token pembayaran: ${error.message}`, 500);
+  },
+
   async logStatusChange(paymentId: string, status: string, payload: unknown) {
     const { error } = await supabaseAdmin.from("payment_logs").insert({
       payment_id: paymentId,

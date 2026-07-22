@@ -37,6 +37,21 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     return res.status(401).json({ success: false, message: "Sesi login tidak valid, silakan login kembali" });
   }
 
+  // PENTING (keamanan): tanpa cek ini, siapa pun bisa daftar pakai email
+  // asal/ngasal (yang sebenarnya bukan miliknya) dan tetap dapat sesi login
+  // dari Supabase begitu signUp dipanggil — karena token JWT tetap valid
+  // walau email belum pernah dikonfirmasi. Login dengan password memang
+  // sudah diblokir Supabase untuk email belum terkonfirmasi, TAPI sesi dari
+  // signUp() itu sendiri (dan OAuth Google, yang emailnya otomatis
+  // ter-provider-confirm) tetap lolos tanpa cek eksplisit ini. Login via
+  // Google/OAuth tidak terpengaruh (email_confirmed_at otomatis terisi).
+  if (!data.user.email_confirmed_at) {
+    return res.status(403).json({
+      success: false,
+      message: "Verifikasi email Anda terlebih dahulu (cek inbox/spam) sebelum melanjutkan",
+    });
+  }
+
   req.user = { authId: data.user.id, email: data.user.email ?? "" };
   next();
 }
