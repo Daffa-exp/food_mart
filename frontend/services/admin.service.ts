@@ -1,4 +1,4 @@
-import { apiClient } from "@/services/api-client";
+import { apiClient } from "@/services/admin-api-client";
 import {
   AdminProfile, DashboardSummary, AdminProduct, AdminCategory, AdminOrderListItem,
 } from "@/types/admin";

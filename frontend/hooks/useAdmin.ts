@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { useUser } from "@/hooks/useUser";
+import { useAdminAuthStore } from "@/store/admin-auth-store";
 import {
   adminAuthService, adminDashboardService, adminProductService, adminCategoryService,
   adminOrderService, AdminProductListParams, AdminOrderListParams,
@@ -12,7 +12,8 @@ import {
 } from "@/services/admin.service";
 
 export function useAdminProfile() {
-  const { user, isLoading: isUserLoading } = useUser();
+  const user = useAdminAuthStore((s) => s.user);
+  const isUserLoading = useAdminAuthStore((s) => s.isLoading);
   const query = useQuery({
     queryKey: ["admin-me"],
     queryFn: () => adminAuthService.getMe(),

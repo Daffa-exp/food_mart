@@ -6,12 +6,13 @@ import toast from "react-hot-toast";
 import Button from "@/components/ui/Button";
 import ChangePasswordForm from "@/components/profile/ChangePasswordForm";
 import { useAdminProfile } from "@/hooks/useAdmin";
-import { useAuthStore } from "@/store/auth-store";
+import { useAdminAuthStore } from "@/store/admin-auth-store";
+import { supabaseAdminClient } from "@/services/supabase-admin-client";
 
 export default function AdminProfilePage() {
   const router = useRouter();
   const { data: admin, isLoading, isError } = useAdminProfile();
-  const signOut = useAuthStore((s) => s.signOut);
+  const signOut = useAdminAuthStore((s) => s.signOut);
 
   async function handleLogout() {
     await signOut();
@@ -44,7 +45,7 @@ export default function AdminProfilePage() {
 
       <div className="rounded-card border border-surface-border bg-white p-5">
         <h3 className="mb-4 text-sm font-bold text-ink-900">Ubah Password</h3>
-        <ChangePasswordForm />
+        <ChangePasswordForm client={supabaseAdminClient} />
       </div>
 
       <Button variant="outline" onClick={handleLogout} className="w-full border-red-200 text-red-500 hover:bg-red-50">

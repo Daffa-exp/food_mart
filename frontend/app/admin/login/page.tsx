@@ -9,13 +9,13 @@ import { Mail, Lock, Soup } from "lucide-react";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import { loginSchema, LoginFormValues } from "@/utils/validation";
-import { useAuthStore } from "@/store/auth-store";
+import { useAdminAuthStore } from "@/store/admin-auth-store";
 import { adminAuthService } from "@/services/admin.service";
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const signInWithPassword = useAuthStore((s) => s.signInWithPassword);
-  const signOut = useAuthStore((s) => s.signOut);
+  const signInWithPassword = useAdminAuthStore((s) => s.signInWithPassword);
+  const signOut = useAdminAuthStore((s) => s.signOut);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {
     register,
@@ -28,8 +28,8 @@ export default function AdminLoginPage() {
     try {
       await signInWithPassword(values.email, values.password);
       // Verifikasi role admin ke backend SETELAH login Supabase berhasil —
-      // kalau bukan admin, sign out lagi supaya tidak nyangkut sesi customer
-      // yang membingungkan di area admin.
+      // kalau bukan admin, sign out lagi (dari sesi admin, sesi customer
+      // di tab yang sama TIDAK ikut terpengaruh karena keduanya independen).
       await adminAuthService.getMe();
       toast.success("Selamat datang, Admin!");
       router.push("/admin");
