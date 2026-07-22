@@ -1,12 +1,18 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { LogOut } from "lucide-react";
+import { LogOut, Menu as MenuIcon } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/store/auth-store";
 import { AdminProfile } from "@/types/admin";
 
-export default function AdminTopbar({ admin }: { admin: AdminProfile }) {
+export default function AdminTopbar({
+  admin,
+  onOpenMobileMenu,
+}: {
+  admin: AdminProfile;
+  onOpenMobileMenu: () => void;
+}) {
   const router = useRouter();
   const signOut = useAuthStore((s) => s.signOut);
 
@@ -18,9 +24,19 @@ export default function AdminTopbar({ admin }: { admin: AdminProfile }) {
 
   return (
     <header className="flex items-center justify-between border-b border-surface-border bg-white px-4 py-3 sm:px-6">
-      <div>
-        <p className="text-sm font-semibold text-ink-900">Halo, {admin.fullName.split(" ")[0]} 👋</p>
-        <p className="text-xs text-ink-400 capitalize">{admin.role.replace("_", " ")}</p>
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={onOpenMobileMenu}
+          aria-label="Buka menu"
+          className="flex h-9 w-9 items-center justify-center rounded-input border border-surface-border text-ink-700 hover:bg-surface-cream lg:hidden"
+        >
+          <MenuIcon className="h-4.5 w-4.5" />
+        </button>
+        <div>
+          <p className="text-sm font-semibold text-ink-900">Halo, {admin.fullName.split(" ")[0]} 👋</p>
+          <p className="text-xs text-ink-400 capitalize">{admin.role.replace("_", " ")}</p>
+        </div>
       </div>
       <div className="flex items-center gap-3">
         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-500 text-sm font-semibold text-white">

@@ -98,14 +98,24 @@ function CheckoutForm() {
         items: lines.map((l) => ({ productId: l.productId, quantity: l.quantity })),
       });
 
+      // PENTING: cart dikosongkan SEKARANG (begitu order tersimpan di
+      // server), BUKAN menunggu callback onSuccess/onPending dari Snap.
+      // Snap.js adalah script pihak ketiga yang di-load di browser — kalau
+      // koneksi lambat, tab keburu ditutup, atau ada payment method yang
+      // redirect penuh keluar halaman sebelum callback sempat jalan, cart
+      // bisa gak pernah ke-clear walau order-nya sudah valid di database.
+      // Item yang sudah di-checkout dianggap "sudah dipesan" begitu order
+      // tercatat — kalau pembayarannya belum selesai/gagal, user tetap bisa
+      // melanjutkan lewat tombol "Bayar Sekarang" di halaman Riwayat
+      // Pesanan (tidak perlu item itu ada lagi di keranjang).
+      clearCart();
+
       payWithSnap(result.snapToken, {
         onSuccess: () => {
-          clearCart();
           toast.success("Pembayaran berhasil!");
           router.push(`/checkout/berhasil?order_id=${result.orderId}`);
         },
         onPending: () => {
-          clearCart();
           toast("Menunggu pembayaran kamu diselesaikan");
           router.push(`/checkout/berhasil?order_id=${result.orderId}`);
         },
@@ -114,7 +124,10 @@ function CheckoutForm() {
           router.push(`/checkout/gagal?order_id=${result.orderId}`);
         },
         onClose: () => {
-          toast("Kamu menutup jendela pembayaran sebelum selesai");
+          toast("Kamu menutup jendela pembayaran. Order tetap tersimpan, kamu bisa bayar lagi lewat Riwayat Pesanan.", {
+            duration: 5000,
+          });
+          router.push(`/checkout/berhasil?order_id=${result.orderId}`);
         },
       });
     } catch (err) {

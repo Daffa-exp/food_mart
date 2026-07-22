@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminTopbar from "@/components/admin/AdminTopbar";
 import { useUser } from "@/hooks/useUser";
@@ -21,6 +21,8 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
   const hasMounted = useHasMounted();
   const { user, isLoading: isUserLoading } = useUser();
   const { data: admin, isLoading: isAdminLoading, isError } = useAdminProfile();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
 
   const isLoading = !hasMounted || isUserLoading || (!!user && isAdminLoading);
 
@@ -30,6 +32,12 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
       router.replace("/admin/login");
     }
   }, [isLoading, user, isError, router]);
+
+  // Tutup drawer otomatis tiap pindah halaman (mis. setelah klik menu),
+  // supaya tidak nyangkut kebuka pas sudah ganti halaman.
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
 
   if (isLoading || !admin) {
     return (
@@ -41,9 +49,9 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-surface-cream">
-      <AdminSidebar />
+      <AdminSidebar isMobileOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
       <div className="flex flex-1 flex-col">
-        <AdminTopbar admin={admin} />
+        <AdminTopbar admin={admin} onOpenMobileMenu={() => setIsMobileMenuOpen(true)} />
         <main className="flex-1 p-4 sm:p-6">{children}</main>
       </div>
     </div>

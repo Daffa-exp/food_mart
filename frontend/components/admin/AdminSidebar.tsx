@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, ShoppingBag, Package, FolderTree, Users, Star,
   Tag, Ticket, Boxes, FileBarChart, CreditCard, Settings, UserCog, Soup, ShieldCheck,
-  MessageSquareText,
+  MessageSquareText, X,
 } from "lucide-react";
 import { cn } from "@/utils/format";
 
@@ -29,11 +29,11 @@ const NAV_ITEMS = [
   { label: "Admin Management", href: "/admin/admins", icon: ShieldCheck },
 ];
 
-export default function AdminSidebar() {
+function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-60 shrink-0 flex-col border-r border-surface-border bg-white lg:flex">
+    <>
       <div className="flex items-center gap-2 px-5 py-5">
         <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-500 text-white">
           <Soup className="h-5 w-5" />
@@ -56,6 +56,7 @@ export default function AdminSidebar() {
             >
               <Link
                 href={item.href}
+                onClick={onNavigate}
                 className={cn(
                   "flex items-center gap-3 rounded-input px-3 py-2.5 text-sm font-medium transition-colors",
                   isActive
@@ -70,6 +71,63 @@ export default function AdminSidebar() {
           );
         })}
       </nav>
-    </aside>
+    </>
+  );
+}
+
+// Sidebar admin punya 2 wujud:
+// 1. Desktop (lg ke atas): sidebar statis, selalu kelihatan di kiri.
+// 2. Mobile/tablet (di bawah lg): SEBELUMNYA cuma "hidden" tanpa pengganti
+//    apa pun, jadi seluruh navigasi admin hilang total di HP. Sekarang jadi
+//    drawer yang dibuka lewat tombol hamburger di AdminTopbar (lihat prop
+//    isMobileOpen/onClose yang dikontrol dari sana).
+export default function AdminSidebar({
+  isMobileOpen,
+  onClose,
+}: {
+  isMobileOpen: boolean;
+  onClose: () => void;
+}) {
+  return (
+    <>
+      {/* Desktop */}
+      <aside className="hidden w-60 shrink-0 flex-col border-r border-surface-border bg-white lg:flex">
+        <SidebarContent />
+      </aside>
+
+      {/* Mobile drawer */}
+      <AnimatePresence>
+        {isMobileOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={onClose}
+              className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+            />
+            <motion.aside
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "tween", duration: 0.22 }}
+              className="fixed inset-y-0 left-0 z-50 flex w-72 max-w-[80vw] flex-col bg-white shadow-xl lg:hidden"
+            >
+              <div className="flex items-center justify-end px-3 pt-3">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  aria-label="Tutup menu"
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-ink-700 hover:bg-surface-cream"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <SidebarContent onNavigate={onClose} />
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

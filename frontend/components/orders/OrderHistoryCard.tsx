@@ -7,6 +7,7 @@ import { cn, formatRupiah } from "@/utils/format";
 import { Order, OrderStatus } from "@/types/entities";
 import { useMyReviews, useSubmitReview } from "@/hooks/useAccountData";
 import RatingModal from "@/components/orders/RatingModal";
+import PayNowButton from "@/components/orders/PayNowButton";
 
 const STATUS_CONFIG: Record<OrderStatus, { label: string; className: string }> = {
   pending: { label: "Menunggu Pembayaran", className: "bg-surface-cream text-ink-700" },
@@ -83,14 +84,20 @@ export default function OrderHistoryCard({ order }: { order: Order }) {
         <span className="font-bold text-ink-900">{formatRupiah(order.total_amount)}</span>
       </div>
 
+      {order.status === "pending" && (
+        <div className="mt-3">
+          <PayNowButton orderId={order.id} size="sm" className="w-full" />
+        </div>
+      )}
+
       {reviewingItem && (
         <RatingModal
           productName={reviewingItem.productName}
           isSubmitting={submitReview.isPending}
           onClose={() => setReviewingItem(null)}
-          onSubmit={({ rating, comment, photos }) =>
+          onSubmit={({ rating, comment }) =>
             submitReview.mutate(
-              { orderItemId: reviewingItem.id, rating, comment: comment || undefined, photos },
+              { orderItemId: reviewingItem.id, rating, comment: comment || undefined },
               { onSuccess: () => setReviewingItem(null) }
             )
           }

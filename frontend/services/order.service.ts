@@ -34,4 +34,11 @@ export const orderService = {
     const { data } = await apiClient.get(`/orders/${orderId}`);
     return data.data;
   },
+
+  async resumePayment(orderId: string): Promise<{ snapToken: string }> {
+    const { data } = await apiClient.post<{ success: boolean; data: { snapToken: string } }>(
+      `/orders/${orderId}/resume-payment`
+    );
+    return data.data;
+  },
 };

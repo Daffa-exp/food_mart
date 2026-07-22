@@ -14,6 +14,7 @@ import Footer from "@/components/layout/Footer";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import OrderStatusLive from "@/components/checkout/OrderStatusLive";
 import PaymentInfoLive from "@/components/checkout/PaymentInfoLive";
+import PayNowButton from "@/components/orders/PayNowButton";
 import Button from "@/components/ui/Button";
 import { formatRupiah } from "@/utils/format";
 import { orderService } from "@/services/order.service";
@@ -170,6 +171,11 @@ export default async function PaymentSuccessPage({
                       <badge.icon className="h-3.5 w-3.5" /> {badge.label}
                     </span>
                   ))}
+                </div>
+              )}
+              {order.status === "pending" && (
+                <div className="mt-5">
+                  <PayNowButton orderId={order.id} />
                 </div>
               )}
             </div>
