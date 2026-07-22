@@ -1,30 +1,39 @@
-import { createBrowserClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 let adminBrowserClient: SupabaseClient | null = null;
 
 /**
- * PENTING: client Supabase TERPISAH khusus Admin Panel, dengan
- * `storageKey` yang beda dari client customer (services/supabase-client.ts).
+ * PENTING: client Supabase TERPISAH khusus Admin Panel, dengan penyimpanan
+ * sesi yang beda dari client customer (services/supabase-client.ts).
  *
- * Sebelumnya Admin Panel memakai client yang SAMA PERSIS dengan sisi
- * customer — artinya cuma ada SATU sesi login per browser. Begitu admin
- * login lewat /admin/login, sesi itu otomatis "menimpa" sesi customer di
- * tab/browser yang sama (Navbar customer ikut menampilkan akun admin
- * tersebut sebagai user yang login, keranjang/notifikasi ikut tercampur).
+ * CATATAN PERBAIKAN (percobaan sebelumnya gagal 2x):
+ * 1. Percobaan pertama pakai `createBrowserClient` dari `@supabase/ssr`
+ *    dengan opsi `auth.storageKey` — diabaikan, karena paket itu menyimpan
+ *    sesi lewat cookie, bukan lewat opsi itu.
+ * 2. Percobaan kedua ganti ke `cookieOptions.name` di `@supabase/ssr` —
+ *    seharusnya benar, tapi paket `@supabase/ssr` didesain buat skenario
+ *    SSR (baca sesi dari cookie di Server Component/middleware), yang
+ *    SAMA SEKALI TIDAK DIPAKAI di Admin Panel ini (AdminGuard 100%
+ *    client-side, tidak ada Server Component yang baca sesi admin).
  *
- * Dengan storageKey berbeda, Supabase menyimpan token admin & customer di
- * slot localStorage yang berbeda — login/logout di satu sisi TIDAK
- * memengaruhi sesi di sisi lainnya, walau dibuka di browser yang sama.
+ * Solusi paling aman: pakai `createClient` POLOS dari `@supabase/supabase-js`
+ * (bukan `@supabase/ssr`) — paket inti yang opsi `auth.storageKey`-nya resmi
+ * didukung dan dipakai langsung untuk menentukan key localStorage, tanpa
+ * lapisan cookie tambahan yang bisa salah konfigurasi. Ini cukup untuk
+ * Admin Panel karena semuanya client-side.
  */
 function getSupabaseAdminBrowserClient(): SupabaseClient {
   if (!adminBrowserClient) {
-    adminBrowserClient = createBrowserClient(
+    adminBrowserClient = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         auth: {
-          storageKey: "foodmart-admin-auth",
+          storageKey: "sb-foodmart-admin-auth",
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: false,
         },
       }
     );
@@ -32,6 +41,9 @@ function getSupabaseAdminBrowserClient(): SupabaseClient {
   return adminBrowserClient;
 }
 
+// Proxy supaya `supabaseAdminClient.auth.xxx()` tetap terasa seperti akses
+// langsung, padahal instance sebenarnya baru dibuat saat method pertama
+// dipanggil (lazy, aman dari isu SSR).
 export const supabaseAdminClient = new Proxy({} as SupabaseClient, {
   get(_target, prop) {
     const client = getSupabaseAdminBrowserClient();
