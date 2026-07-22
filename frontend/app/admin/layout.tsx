@@ -4,9 +4,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminTopbar from "@/components/admin/AdminTopbar";
+import { useUser } from "@/hooks/useUser";
 import { useHasMounted } from "@/hooks/useHasMounted";
 import { useAdminProfile } from "@/hooks/useAdmin";
-import { useAdminAuthStore } from "@/store/admin-auth-store";
 
 export default function AdminRootLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -19,20 +19,10 @@ export default function AdminRootLayout({ children }: { children: React.ReactNod
 function AdminGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const hasMounted = useHasMounted();
-  const user = useAdminAuthStore((s) => s.user);
-  const isUserLoading = useAdminAuthStore((s) => s.isLoading);
-  const isInitialized = useAdminAuthStore((s) => s.isInitialized);
-  const init = useAdminAuthStore((s) => s.init);
+  const { user, isLoading: isUserLoading } = useUser();
   const { data: admin, isLoading: isAdminLoading, isError } = useAdminProfile();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
-
-  // Store admin punya sesi Supabase sendiri (lihat store/admin-auth-store.ts),
-  // jadi perlu di-init sendiri di sini — TIDAK di-init otomatis oleh
-  // AppProviders global (itu cuma untuk sesi customer).
-  useEffect(() => {
-    if (!isInitialized) init();
-  }, [isInitialized, init]);
 
   const isLoading = !hasMounted || isUserLoading || (!!user && isAdminLoading);
 
@@ -58,17 +48,8 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    // PENTING soal overflow di HP: flexbox secara default punya
-    // "min-width: auto" pada anak-anaknya, artinya elemen sebelah kanan
-    // (main) menolak menyusut lebih kecil dari lebar konten terlebarnya
-    // (misal tabel/baris filter yang panjang) — akibatnya SELURUH halaman
-    // (bukan cuma tabelnya) ikut melebar ke samping dan memicu geser
-    // horizontal, walau tabel individual sudah dibungkus overflow-x-auto.
-    // "min-w-0" di sini memaksa area konten boleh menyusut sesuai lebar
-    // layar HP, sehingga overflow-x-auto pada tabel di dalamnya baru bisa
-    // benar-benar berfungsi sebagai pembatas. Ini berlaku untuk SEMUA
-    // halaman admin sekaligus karena diterapkan di layout bersama, bukan
-    // per halaman.
+    // min-w-0 di sini tetap dipertahankan — ini fix overflow di HP untuk
+    // SEMUA halaman admin (tidak terkait sesi login, jadi aman dibiarkan).
     <div className="flex min-h-screen bg-surface-cream">
       <AdminSidebar isMobileOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
       <div className="flex min-w-0 flex-1 flex-col">

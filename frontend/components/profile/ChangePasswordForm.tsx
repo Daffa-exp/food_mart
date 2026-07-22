@@ -5,24 +5,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
 import { useState } from "react";
 import { Lock } from "lucide-react";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import { changePasswordSchema, ChangePasswordValues } from "@/utils/profile-validation";
 import { supabase } from "@/services/supabase-client";
 
-// PENTING: sebelumnya komponen ini SELALU pakai client customer
-// (import { supabase }) walau dipakai juga di halaman profil Admin Panel
-// — akibatnya saat admin ganti password di sana, request-nya mengarah ke
-// sesi customer (bukan sesi admin yang sedang login), jadi bisa gagal
-// (tidak ada sesi customer aktif) atau salah sasaran. Sekarang client bisa
-// di-override lewat prop; default tetap `supabase` (customer) supaya
-// pemakaian di halaman profil customer tidak perlu berubah sama sekali.
-export default function ChangePasswordForm({
-  client = supabase,
-}: {
-  client?: SupabaseClient;
-}) {
+export default function ChangePasswordForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {
     register,
@@ -34,7 +22,7 @@ export default function ChangePasswordForm({
   async function onSubmit(values: ChangePasswordValues) {
     setIsSubmitting(true);
     try {
-      const { error } = await client.auth.updateUser({ password: values.newPassword });
+      const { error } = await supabase.auth.updateUser({ password: values.newPassword });
       if (error) throw error;
       toast.success("Password berhasil diperbarui");
       reset();

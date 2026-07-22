@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { LogOut, Menu as MenuIcon } from "lucide-react";
 import toast from "react-hot-toast";
-import { useAdminAuthStore } from "@/store/admin-auth-store";
+import { useAuthStore } from "@/store/auth-store";
 import { AdminProfile } from "@/types/admin";
 
 export default function AdminTopbar({
@@ -14,7 +14,7 @@ export default function AdminTopbar({
   onOpenMobileMenu: () => void;
 }) {
   const router = useRouter();
-  const signOut = useAdminAuthStore((s) => s.signOut);
+  const signOut = useAuthStore((s) => s.signOut);
 
   async function handleLogout() {
     await signOut();

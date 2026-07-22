@@ -5,7 +5,7 @@ import { Download, FileText } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { formatRupiah } from "@/utils/format";
 import { useAdminOrders } from "@/hooks/useAdmin";
-import { apiClient } from "@/services/admin-api-client";
+import { apiClient } from "@/services/api-client";
 
 async function downloadReport(kind: "excel" | "pdf", dateFrom: string, dateTo: string) {
   const response = await apiClient.get(`/admin/reports/export/${kind}`, {
