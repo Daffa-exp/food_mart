@@ -17,4 +17,12 @@ export const uploadService = {
     });
     return data.data as { url: string; path: string };
   },
+
+  // Alias — dipakai RatingModal.tsx (upload foto ulasan). Sengaja
+  // dipertahankan sebagai alias (bukan dihapus) supaya komponen yang sudah
+  // memanggil nama ini tidak perlu diubah. Perilakunya identik dengan
+  // uploadImage, cuma nama fungsi beda.
+  async uploadCustomerImage(file: File, folder: "reviews" | "avatars" = "reviews") {
+    return this.uploadImage(file, folder);
+  },
 };
