@@ -24,13 +24,33 @@ function AuthInitializer() {
 // lihat notifikasi/wishlist orang lain selama beberapa saat. Komponen ini
 // mengosongkan seluruh cache setiap kali authId berubah (termasuk saat
 // logout ke null), supaya tidak ada data nyasar antar akun.
+//
+// BUG YANG SEMPAT TERJADI & SUDAH DIPERBAIKI: baseline authId sebelumnya
+// diambil langsung saat komponen ini MOUNT — padahal saat itu useAuthStore
+// belum selesai cek sesi ke Supabase (authId masih placeholder null).
+// Begitu proses cek sesi selesai (authId berubah dari null -> user asli),
+// itu ke-anggap "ganti akun" dan queryClient.clear() dipanggil DI TENGAH
+// proses fetch pertama kali (produk, promosi, dst) — request yang lagi
+// jalan ikut kebatalin diam-diam dan gak pernah di-retry, sehingga
+// halaman Beranda/Menu kelihatan "loading selamanya". Sekarang baseline
+// authId BARU diambil SETELAH isInitialized true (proses cek sesi beneran
+// selesai), supaya resolusi sesi pertama kali TIDAK dianggap pergantian
+// akun — clear() cuma jalan untuk pergantian akun yang BENERAN terjadi
+// setelah aplikasi sudah sepenuhnya siap.
 function QueryCacheResetOnAuthChange({ queryClient }: { queryClient: QueryClient }) {
   const authId = useAuthStore((s) => s.user?.id ?? null);
+  const isInitialized = useAuthStore((s) => s.isInitialized);
   const previousAuthId = useRef<string | null | undefined>(undefined);
 
   useEffect(() => {
-    // Lewati sekali di awal (initial mount) — cache memang masih kosong,
-    // tidak perlu di-clear, cukup mulai "mengingat" authId saat ini.
+    // Tunggu sampai auth store BENERAN selesai cek sesi ke Supabase —
+    // sebelum itu, authId masih placeholder dan belum boleh dijadikan
+    // acuan baseline.
+    if (!isInitialized) return;
+
+    // Baseline diambil SEKALI, tepat setelah inisialisasi selesai (bukan
+    // saat mount). Resolusi pertama ini bukan "ganti akun", jadi tidak
+    // perlu clear.
     if (previousAuthId.current === undefined) {
       previousAuthId.current = authId;
       return;
@@ -39,7 +59,7 @@ function QueryCacheResetOnAuthChange({ queryClient }: { queryClient: QueryClient
       queryClient.clear();
       previousAuthId.current = authId;
     }
-  }, [authId, queryClient]);
+  }, [authId, isInitialized, queryClient]);
 
   return null;
 }
