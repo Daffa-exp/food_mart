@@ -23,10 +23,7 @@ export const reviewRepository = {
     return { productId: data.product_id as string, orderStatus: order.status as string };
   },
 
-  async create(
-    userId: string,
-    payload: { productId: string; orderItemId: string; rating: number; comment?: string; photos?: string[] }
-  ) {
+  async create(userId: string, payload: { productId: string; orderItemId: string; rating: number; comment?: string; imageUrls?: string[] }) {
     const { data, error } = await supabaseAdmin
       .from("reviews")
       .insert({
@@ -35,7 +32,7 @@ export const reviewRepository = {
         order_item_id: payload.orderItemId,
         rating: payload.rating,
         comment: payload.comment,
-        photos: payload.photos ?? [],
+        image_urls: payload.imageUrls ?? [],
       })
       .select()
       .single();
@@ -52,7 +49,7 @@ export const reviewRepository = {
   async listMine(userId: string) {
     const { data, error } = await supabaseAdmin
       .from("reviews")
-      .select("id, product_id, order_item_id, rating, comment, photos, admin_reply, created_at")
+      .select("id, product_id, order_item_id, rating, comment, image_urls, admin_reply, created_at")
       .eq("user_id", userId);
     if (error) throw new AppError(`Gagal mengambil ulasan: ${error.message}`, 500);
     return data ?? [];
@@ -61,7 +58,7 @@ export const reviewRepository = {
   async listByProduct(productId: string) {
     const { data, error } = await supabaseAdmin
       .from("reviews")
-      .select("id, rating, comment, photos, admin_reply, created_at, users(full_name)")
+      .select("id, rating, comment, image_urls, admin_reply, created_at, users(full_name, avatar_url)")
       .eq("product_id", productId)
       .eq("is_visible", true)
       .order("created_at", { ascending: false });

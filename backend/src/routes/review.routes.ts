@@ -9,7 +9,7 @@ const createReviewSchema = z.object({
   orderItemId: z.string().uuid("orderItemId tidak valid"),
   rating: z.number().int().min(1, "Rating minimal 1").max(5, "Rating maksimal 5"),
   comment: z.string().max(1000).optional(),
-  photos: z.array(z.string().url()).max(5, "Maksimal 5 foto per ulasan").optional(),
+  imageUrls: z.array(z.string().url()).max(3, "Maksimal 3 foto per ulasan").optional(),
 });
 
 function toDTO(row: Record<string, unknown>) {
@@ -19,7 +19,7 @@ function toDTO(row: Record<string, unknown>) {
     orderItemId: row.order_item_id,
     rating: row.rating,
     comment: row.comment,
-    photos: row.photos ?? [],
+    imageUrls: row.image_urls ?? [],
     adminReply: row.admin_reply,
     createdAt: row.created_at,
   };
@@ -39,9 +39,10 @@ router.get("/", optionalAuth, async (req: Request, res: Response, next: NextFunc
       data: rows.map((r) => ({
         id: r.id,
         userName: (r.users as unknown as { full_name: string } | null)?.full_name ?? "Pengguna",
+        userAvatarUrl: (r.users as unknown as { avatar_url: string | null } | null)?.avatar_url ?? null,
         rating: r.rating,
         comment: r.comment,
-        photos: r.photos ?? [],
+        imageUrls: r.image_urls ?? [],
         adminReply: r.admin_reply,
         createdAt: r.created_at,
       })),
@@ -83,7 +84,7 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
       orderItemId: payload.orderItemId,
       rating: payload.rating,
       comment: payload.comment,
-      photos: payload.photos,
+      imageUrls: payload.imageUrls,
     });
 
     res.status(201).json({ success: true, message: "Terima kasih atas rating & komentarnya!", data: toDTO(review) });

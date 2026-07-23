@@ -9,6 +9,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import RequireAuth from "@/components/auth/RequireAuth";
 import Button from "@/components/ui/Button";
 import ProfileForm from "@/components/profile/ProfileForm";
+import AvatarUploader from "@/components/profile/AvatarUploader";
 import ChangePasswordForm from "@/components/profile/ChangePasswordForm";
 import SavedAddressesSection from "@/components/profile/SavedAddressesSection";
 import { useProfile } from "@/hooks/useAccountData";
@@ -57,9 +58,7 @@ function ProfileContent() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4 rounded-card border border-surface-border bg-white p-5">
-        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-500 text-xl font-bold text-white">
-          {profile.fullName.slice(0, 2).toUpperCase()}
-        </span>
+        <AvatarUploader profile={profile} />
         <div>
           <p className="font-bold text-ink-900">{profile.fullName}</p>
           <p className="text-sm text-ink-700">{profile.email}</p>
