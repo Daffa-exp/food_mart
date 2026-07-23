@@ -73,7 +73,7 @@ export default function AvatarUploader({ profile }: { profile: UserProfile }) {
         onClick={() => inputRef.current?.click()}
         disabled={isUploading}
         aria-label="Ganti foto profil"
-        className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-ink-900 text-white shadow-sm transition-colors hover:bg-primary-500 disabled:opacity-60"
+        className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-primary-500 text-white shadow-md transition-colors hover:bg-primary-600 disabled:opacity-60"
       >
         {isUploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Camera className="h-3 w-3" />}
       </button>
