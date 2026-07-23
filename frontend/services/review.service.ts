@@ -21,6 +21,7 @@ export interface CreateReviewPayload {
 export interface ProductReview {
   id: string;
   userName: string;
+  userAvatarUrl: string | null;
   rating: number;
   comment: string | null;
   photos: string[];
