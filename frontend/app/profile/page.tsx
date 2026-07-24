@@ -11,6 +11,7 @@ import Button from "@/components/ui/Button";
 import ProfileForm from "@/components/profile/ProfileForm";
 import AvatarUploader from "@/components/profile/AvatarUploader";
 import ChangePasswordForm from "@/components/profile/ChangePasswordForm";
+import PushNotificationToggle from "@/components/profile/PushNotificationToggle";
 import SavedAddressesSection from "@/components/profile/SavedAddressesSection";
 import { useProfile } from "@/hooks/useAccountData";
 import { useAuthStore } from "@/store/auth-store";
@@ -76,6 +77,8 @@ function ProfileContent() {
       </div>
 
       <SavedAddressesSection />
+
+      <PushNotificationToggle />
 
       <div className="rounded-card border border-surface-border bg-white p-5">
         <h3 className="mb-4 text-sm font-bold text-ink-900">Ubah Password</h3>
