@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "../config/supabase";
 import { AppError } from "../middlewares/errorHandler";
+import { pushService } from "../services/push.service";
 
 export type NotificationType = "order" | "promotion" | "system" | "payment" | "review";
 
@@ -23,7 +24,22 @@ export const notificationRepository = {
     // Notifikasi gagal terkirim tidak boleh menggagalkan aksi utama admin
     // (mis. balas ulasan tetap tersimpan walau notifikasi gagal dibuat),
     // jadi di sini cukup dilempar sebagai warning ke caller lewat log.
-    if (error) console.error("Gagal membuat notifikasi:", error.message);
+    if (error) {
+      console.error("Gagal membuat notifikasi:", error.message);
+      return;
+    }
+
+    // Push notification dikirim SETELAH notifikasi in-app berhasil
+    // tersimpan, dan TIDAK di-await (fire-and-forget) — supaya caller
+    // (mis. webhook pembayaran) tidak ikut lambat/gagal gara-gara proses
+    // kirim push yang bisa makan waktu beberapa detik per device.
+    pushService
+      .sendToUser(input.userId, {
+        title: input.title,
+        body: input.message,
+        url: pushUrlForType(input.type, input.referenceId),
+      })
+      .catch((err: unknown) => console.error("[push] Gagal kirim notifikasi push:", err));
   },
 
   async listByUserId(userId: string) {
@@ -82,6 +98,34 @@ export const notificationRepository = {
     // Notifikasi gagal terkirim tidak boleh menggagalkan aksi utama admin
     // (promo/kupon tetap tersimpan walau broadcast notifikasi gagal).
     const { error } = await supabaseAdmin.from("notifications").insert(rows);
-    if (error) console.error("Gagal broadcast notifikasi:", error.message);
+    if (error) {
+      console.error("Gagal broadcast notifikasi:", error.message);
+      return;
+    }
+
+    pushService
+      .sendToAll({
+        title: input.title,
+        body: input.message,
+        url: pushUrlForType(input.type, input.referenceId),
+      })
+      .catch((err: unknown) => console.error("[push] Gagal broadcast notifikasi push:", err));
   },
 };
+
+// URL halaman yang dibuka kalau notifikasi push diklik — disesuaikan
+// dengan jenis notifikasinya, supaya user langsung diarahkan ke tempat
+// yang relevan (bukan cuma buka halaman utama).
+function pushUrlForType(type: NotificationType, referenceId?: string): string {
+  switch (type) {
+    case "order":
+    case "payment":
+      return referenceId ? `/checkout/berhasil?order_id=${referenceId}` : "/orders";
+    case "review":
+      return "/orders";
+    case "promotion":
+      return "/menu";
+    default:
+      return "/notifikasi";
+  }
+}

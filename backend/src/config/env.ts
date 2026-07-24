@@ -24,6 +24,14 @@ const envSchema = z.object({
   RATE_LIMIT_MAX: z.string().default("100"),
 
   SUPABASE_STORAGE_BUCKET: z.string().default("public-images"),
+
+  // Web Push (notifikasi native ke desktop/HP walau tab/app tertutup).
+  // Generate sekali pakai `npx web-push generate-vapid-keys`, lalu simpan
+  // permanen di .env — jangan di-generate ulang, nanti subscription lama
+  // yang tersimpan di browser user jadi tidak valid lagi.
+  VAPID_PUBLIC_KEY: z.string().optional(),
+  VAPID_PRIVATE_KEY: z.string().optional(),
+  VAPID_SUBJECT: z.string().default("mailto:admin@foodmart.id"),
 });
 
 const parsed = envSchema.safeParse(process.env);

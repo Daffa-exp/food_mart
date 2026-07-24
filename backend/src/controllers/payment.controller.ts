@@ -110,11 +110,29 @@ async function processPaymentNotification(payload: MidtransNotificationPayload) 
 
   const mappedStatus = mapMidtransStatus(verifiedStatus.transaction_status, verifiedStatus.fraud_status);
 
-  const { data: order, error } = await supabaseAdmin
+  let { data: order, error } = await supabaseAdmin
     .from("orders")
     .select("*, order_items(*)")
     .eq("order_number", payload.order_id)
     .maybeSingle();
+
+  // Fallback: order_id dari notifikasi ini mungkin bukan order_number asli,
+  // melainkan order_id hasil retry "Bayar Sekarang" (order_number + suffix
+  // unik, lihat resumePayment di order.controller.ts). Cari lewat kolom
+  // payments.midtrans_order_id yang menyimpan order_id terakhir yang
+  // dipakai ke Midtrans.
+  if (!order) {
+    const fallbackOrderId = await paymentRepository.findOrderIdByMidtransOrderId(payload.order_id);
+    if (fallbackOrderId) {
+      const fallbackResult = await supabaseAdmin
+        .from("orders")
+        .select("*, order_items(*)")
+        .eq("id", fallbackOrderId)
+        .maybeSingle();
+      order = fallbackResult.data;
+      error = fallbackResult.error;
+    }
+  }
 
   if (error || !order) {
     throw new AppError(`Order dengan order_number ${payload.order_id} tidak ditemukan`, 404);

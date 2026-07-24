@@ -206,6 +206,17 @@ const snap = await midtransService.createSnapTransaction({
         throw new AppError(`Pesanan ini sudah berstatus "${payment.status}", tidak bisa dibayar ulang`, 400);
       }
 
+      // PENTING: Midtrans MENOLAK bikin transaksi Snap baru dengan order_id
+      // yang sama persis dengan transaksi yang sudah pernah dibuat
+      // sebelumnya (walau transaksi lamanya masih pending) — kalau tetap
+      // pakai order.order_number apa adanya di sini, Midtrans akan
+      // menolaknya dan endpoint ini gagal dengan error server. Makanya
+      // dibuat order_id BARU (order_number asli + suffix unik) khusus
+      // untuk percobaan bayar ulang ini. Suffix disimpan di kolom
+      // payments.midtrans_order_id supaya webhook tetap bisa menemukan
+      // order yang benar nanti.
+      const midtransOrderId = `${order.order_number}-R${Date.now().toString(36).toUpperCase()}`;
+
       // Item detail disederhanakan jadi satu baris (bukan rekonstruksi
       // rincian ongkir/diskon/biaya layanan seperti saat createOrder) —
       // supaya tidak ada risiko total baru meleset dari total_amount yang
@@ -213,7 +224,7 @@ const snap = await midtransService.createSnapTransaction({
       // aplikasi kita sendiri (order detail), Midtrans di sini cuma perlu
       // tahu total tagihannya.
       const snap = await midtransService.createSnapTransaction({
-        orderId: order.order_number,
+        orderId: midtransOrderId,
         internalOrderId: order.id,
         grossAmount: Math.round(Number(order.total_amount)),
         customer: {
@@ -231,7 +242,7 @@ const snap = await midtransService.createSnapTransaction({
         ],
       });
 
-      await paymentRepository.updateSnapToken(payment.id, snap.token);
+      await paymentRepository.updateSnapToken(payment.id, snap.token, midtransOrderId);
 
       res.json({ success: true, data: { snapToken: snap.token } });
     } catch (err) {

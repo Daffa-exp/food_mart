@@ -70,12 +70,29 @@ export const paymentRepository = {
     if (error) throw new AppError(`Gagal memperbarui status pembayaran: ${error.message}`, 500);
   },
 
-  async updateSnapToken(paymentId: string, snapToken: string) {
+  async updateSnapToken(paymentId: string, snapToken: string, midtransOrderId?: string) {
     const { error } = await supabaseAdmin
       .from("payments")
-      .update({ snap_token: snapToken })
+      .update({
+        snap_token: snapToken,
+        ...(midtransOrderId ? { midtrans_order_id: midtransOrderId } : {}),
+      })
       .eq("id", paymentId);
     if (error) throw new AppError(`Gagal memperbarui token pembayaran: ${error.message}`, 500);
+  },
+
+  // Dipakai webhook sebagai fallback: kalau order_id dari notifikasi
+  // Midtrans TIDAK cocok dengan orders.order_number manapun (karena ini
+  // order_id hasil retry "Bayar Sekarang", bukan order_id transaksi
+  // pertama), cari lewat kolom midtrans_order_id ini.
+  async findOrderIdByMidtransOrderId(midtransOrderId: string): Promise<string | null> {
+    const { data, error } = await supabaseAdmin
+      .from("payments")
+      .select("order_id")
+      .eq("midtrans_order_id", midtransOrderId)
+      .maybeSingle();
+    if (error) throw new AppError(`Gagal mencari order dari midtrans_order_id: ${error.message}`, 500);
+    return data?.order_id ?? null;
   },
 
   async logStatusChange(paymentId: string, status: string, payload: unknown) {
