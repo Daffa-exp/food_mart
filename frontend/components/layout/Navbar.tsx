@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Heart, ShoppingCart, Bell, Soup, User, LogOut, Package, Menu as MenuIcon, X } from "lucide-react";
@@ -9,7 +10,7 @@ import { cn } from "@/utils/format";
 import { useCartStore } from "@/store/cart-store";
 import { useHasMounted } from "@/hooks/useHasMounted";
 import { useUser } from "@/hooks/useUser";
-import { useWishlist, useNotifications } from "@/hooks/useAccountData";
+import { useWishlist, useNotifications, useProfile } from "@/hooks/useAccountData";
 import { useAuthStore } from "@/store/auth-store";
 
 const NAV_LINKS = [
@@ -31,6 +32,10 @@ export default function Navbar() {
 
   const { wishlistedIds } = useWishlist();
   const { unreadCount } = useNotifications();
+  // Di-cache React Query — dipakai bareng dengan yang di halaman Profil,
+  // bukan request terpisah/ekstra tiap pindah halaman. Hook ini sendiri
+  // sudah otomatis nonaktif kalau belum login (lihat useAccountData.ts).
+  const { data: profile } = useProfile();
 
   const [search, setSearch] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -112,9 +117,13 @@ export default function Navbar() {
             <div className="relative ml-1 shrink-0">
               <button
                 onClick={() => setIsMenuOpen((o) => !o)}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-500 text-sm font-semibold text-white"
+                className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-primary-500 text-sm font-semibold text-white"
               >
-                {initials}
+                {profile?.avatarUrl ? (
+                  <Image src={profile.avatarUrl} alt={profile.fullName} fill unoptimized className="object-cover" />
+                ) : (
+                  initials
+                )}
               </button>
               <AnimatePresence>
                 {isMenuOpen && (
