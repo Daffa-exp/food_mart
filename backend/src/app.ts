@@ -54,7 +54,24 @@ const app = express();
 app.use(helmet());
 app.use(
   cors({
-    origin: env.CLIENT_URL,
+    origin: (origin, callback) => {
+      // Izinkan request tanpa origin (seperti curl, mobile app, webhook Midtrans)
+      if (!origin) return callback(null, true);
+
+      const clientUrl = env.CLIENT_URL ? env.CLIENT_URL.replace(/\/$/, "") : "";
+      const normalizedOrigin = origin.replace(/\/$/, "");
+
+      if (
+        normalizedOrigin === clientUrl ||
+        normalizedOrigin === "http://localhost:3000" ||
+        normalizedOrigin.endsWith(".vercel.app") ||
+        env.NODE_ENV === "development"
+      ) {
+        return callback(null, true);
+      }
+
+      return callback(null, true);
+    },
     credentials: true,
   })
 );
