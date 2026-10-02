@@ -151,6 +151,7 @@ const snap = await midtransService.createSnapTransaction({
   orderId: order.order_number,
   internalOrderId: order.id,
   grossAmount: Math.round(finalTotal),
+  clientUrl: (req.headers.origin || req.headers.referer) as string | undefined,
   customer: {
     firstName: payload.fullName,
     email: payload.email,
@@ -227,6 +228,7 @@ const snap = await midtransService.createSnapTransaction({
         orderId: midtransOrderId,
         internalOrderId: order.id,
         grossAmount: Math.round(Number(order.total_amount)),
+        clientUrl: (req.headers.origin || req.headers.referer) as string | undefined,
         customer: {
           firstName: order.recipient_name,
           email: req.user!.email,

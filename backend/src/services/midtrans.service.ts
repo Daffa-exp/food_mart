@@ -17,6 +17,7 @@ export interface SnapTransactionInput {
   orderId: string; // pakai order_number, bukan UUID internal, agar rapi di dashboard Midtrans
   internalOrderId: string; // UUID asli di database kita, dipakai untuk redirect balik setelah bayar
   grossAmount: number;
+  clientUrl?: string;
   customer: {
     firstName: string;
     email: string;
@@ -61,6 +62,7 @@ export function mapMidtransStatus(
 
 export const midtransService = {
   async createSnapTransaction(input: SnapTransactionInput) {
+    const baseUrl = (input.clientUrl || env.CLIENT_URL || "http://localhost:3000").replace(/\/$/, "");
     const parameter = {
       transaction_details: {
         order_id: input.orderId,
@@ -77,25 +79,11 @@ export const midtransService = {
         price: item.price,
         quantity: item.quantity,
       })),
-      // PENTING: untuk metode pembayaran yang butuh redirect browser
-      // sungguhan (DANA, ShopeePay, dsb — bukan cuma tampil QR/popup),
-      // Midtrans WAJIB tahu ke mana harus mengarahkan customer setelah
-      // selesai bayar. Kalau ini tidak diisi, Midtrans pakai domain
-      // default/placeholder mereka sendiri alih-alih balik ke website kita.
-      //
-      // Snap punya 3 skenario redirect:
-      // - finish   : pembayaran selesai (berhasil ATAU pending, mis. VA)
-      // - unfinish : customer menutup/membatalkan sebelum selesai
-      // - error    : pembayaran gagal/ditolak
       callbacks: {
-        finish: `${env.CLIENT_URL}/orders?order_id=${input.internalOrderId}`,
-        unfinish: `${env.CLIENT_URL}/orders?order_id=${input.internalOrderId}`,
-        error: `${env.CLIENT_URL}/orders?order_id=${input.internalOrderId}`,
+        finish: `${baseUrl}/orders?order_id=${input.internalOrderId}`,
+        unfinish: `${baseUrl}/orders?order_id=${input.internalOrderId}`,
+        error: `${baseUrl}/orders?order_id=${input.internalOrderId}`,
       },
-      // Semua metode di bawah ini diaktifkan di Midtrans Dashboard Sandbox,
-      // enabled_payments opsional dikosongkan agar Snap menampilkan semua
-      // metode yang aktif di akun (QRIS, GoPay, ShopeePay, DANA, OVO,
-      // Bank Transfer/VA, Kartu Kredit).
     };
 
     const transaction = await snap.createTransaction(parameter);
