@@ -13,10 +13,14 @@ export default function PayNowButton({
   orderId,
   className,
   size = "md",
+  variant = "primary",
+  label = "Bayar Sekarang",
 }: {
   orderId: string;
   className?: string;
   size?: "sm" | "md" | "lg";
+  variant?: "primary" | "outline" | "ghost" | "white";
+  label?: string;
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -60,9 +64,9 @@ export default function PayNowButton({
   }
 
   return (
-    <Button size={size} className={className} onClick={handlePayNow} disabled={isLoading}>
+    <Button variant={variant} size={size} className={className} onClick={handlePayNow} disabled={isLoading}>
       <CreditCard className="h-4 w-4" />
-      {isLoading ? "Memuat..." : "Bayar Sekarang"}
+      {isLoading ? "Memuat..." : label}
     </Button>
   );
 }

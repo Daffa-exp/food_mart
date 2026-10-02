@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import {
@@ -64,16 +64,19 @@ const STATUS_VIEW = {
     badges: [],
   },
   pending: {
-    breadcrumbLabel: "Menunggu Pembayaran",
-    pageTitle: "Menunggu Pembayaran",
-    pageSubtitle: "Pesanan sudah dibuat, tinggal selesaikan pembayarannya.",
+    breadcrumbLabel: "Memverifikasi Pembayaran",
+    pageTitle: "Memverifikasi Pembayaran",
+    pageSubtitle: "Sistem sedang memeriksa dan mengonfirmasi pembayaran pesanan Anda.",
     icon: Clock3,
     iconWrapClass: "bg-amber-50",
-    iconClass: "text-amber-500",
-    cardTitle: "Menunggu Pembayaran",
+    iconClass: "text-amber-500 animate-pulse",
+    cardTitle: "Sedang Memverifikasi Pembayaran",
     cardMessage:
-      "Pesanan kamu sudah kami catat. Segera selesaikan pembayaran sebelum waktu bayar habis, supaya pesanan bisa langsung kami proses.",
-    badges: [{ icon: Clock3, label: "Menunggu Konfirmasi Bank/E-Wallet", className: "bg-amber-50 text-amber-600" }],
+      "Jika Anda sudah menyelesaikan pembayaran di bank/e-wallet, status pesanan akan otomatis terkonfirmasi dalam beberapa detik. Anda tidak perlu membayar ulang.",
+    badges: [
+      { icon: Clock3, label: "Mengecek Pembayaran Otomatis...", className: "bg-amber-50 text-amber-600 animate-pulse" },
+      { icon: ShieldCheck, label: "Verifikasi Aman", className: "bg-primary-50 text-primary-500" },
+    ],
   },
   success: {
     breadcrumbLabel: "Pembayaran Berhasil",
@@ -182,8 +185,19 @@ export default function PaymentResultView({
             </div>
           )}
           {activeOrder.status === "pending" && (
-            <div className="mt-5">
-              <PayNowButton orderId={activeOrder.id} />
+            <div className="mt-6 rounded-card border border-amber-200 bg-amber-50/60 p-4 text-center">
+              <p className="text-xs font-medium text-amber-900">
+                Belum menyelesaikan pembayaran atau jendela pembayaran tertutup?
+              </p>
+              <div className="mt-2.5 flex justify-center">
+                <PayNowButton
+                  orderId={activeOrder.id}
+                  variant="outline"
+                  size="sm"
+                  label="Lanjutkan Pembayaran"
+                  className="bg-white border-amber-400 text-amber-700 hover:bg-amber-100"
+                />
+              </div>
             </div>
           )}
         </div>

@@ -85,8 +85,17 @@ export default function OrderHistoryCard({ order }: { order: Order }) {
       </div>
 
       {order.status === "pending" && (
-        <div className="mt-3">
-          <PayNowButton orderId={order.id} size="sm" className="w-full" />
+        <div className="mt-3 rounded-md bg-amber-50/80 p-3 border border-amber-200">
+          <p className="text-xs text-amber-800 mb-2">
+            💡 <strong>Sudah menyelesaikan pembayaran?</strong> Status akan otomatis terverifikasi dalam beberapa saat tanpa perlu membayar ulang.
+          </p>
+          <PayNowButton
+            orderId={order.id}
+            size="sm"
+            variant="outline"
+            label="Belum Bayar? Lanjutkan Pembayaran"
+            className="w-full bg-white border-amber-400 text-amber-800 hover:bg-amber-100"
+          />
         </div>
       )}
 
