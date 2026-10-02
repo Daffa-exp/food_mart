@@ -9,17 +9,25 @@ const createReviewSchema = z.object({
   orderItemId: z.string().uuid("orderItemId tidak valid"),
   rating: z.number().int().min(1, "Rating minimal 1").max(5, "Rating maksimal 5"),
   comment: z.string().max(1000).optional(),
-  photos: z.array(z.string().url()).max(3, "Maksimal 3 foto per ulasan").optional(),
+  photos: z.array(z.string().url()).max(5, "Maksimal 5 foto per ulasan").optional(),
 });
 
+function extractPhotos(row: Record<string, unknown>): string[] {
+  if (Array.isArray(row.photos) && row.photos.length > 0) return row.photos as string[];
+  if (Array.isArray(row.image_urls) && row.image_urls.length > 0) return row.image_urls as string[];
+  return [];
+}
+
 function toDTO(row: Record<string, unknown>) {
+  const photos = extractPhotos(row);
   return {
     id: row.id,
     productId: row.product_id,
     orderItemId: row.order_item_id,
     rating: row.rating,
     comment: row.comment,
-    photos: row.image_urls ?? [],
+    photos,
+    imageUrls: photos,
     adminReply: row.admin_reply,
     createdAt: row.created_at,
   };
@@ -36,16 +44,20 @@ router.get("/", optionalAuth, async (req: Request, res: Response, next: NextFunc
     const rows = await reviewRepository.listByProduct(productId);
     res.json({
       success: true,
-      data: rows.map((r) => ({
-        id: r.id,
-        userName: (r.users as unknown as { full_name: string } | null)?.full_name ?? "Pengguna",
-        userAvatarUrl: (r.users as unknown as { avatar_url: string | null } | null)?.avatar_url ?? null,
-        rating: r.rating,
-        comment: r.comment,
-        photos: r.image_urls ?? [],
-        adminReply: r.admin_reply,
-        createdAt: r.created_at,
-      })),
+      data: rows.map((r) => {
+        const photos = extractPhotos(r as Record<string, unknown>);
+        return {
+          id: r.id,
+          userName: (r.users as unknown as { full_name: string } | null)?.full_name ?? "Pengguna",
+          userAvatarUrl: (r.users as unknown as { avatar_url: string | null } | null)?.avatar_url ?? null,
+          rating: r.rating,
+          comment: r.comment,
+          photos,
+          imageUrls: photos,
+          adminReply: r.admin_reply,
+          createdAt: r.created_at,
+        };
+      }),
     });
   } catch (err) {
     next(err);
@@ -84,6 +96,7 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
       orderItemId: payload.orderItemId,
       rating: payload.rating,
       comment: payload.comment,
+      photos: payload.photos,
       imageUrls: payload.photos,
     });
 

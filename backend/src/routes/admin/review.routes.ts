@@ -18,17 +18,23 @@ router.get("/", async (_req: Request, res: Response, next: NextFunction) => {
 
     res.json({
       success: true,
-      data: (data ?? []).map((r) => ({
-        id: r.id,
-        userName: (r.users as unknown as { full_name: string })?.full_name ?? "Pengguna",
-        productName: (r.products as unknown as { name: string })?.name ?? "-",
-        rating: r.rating,
-        comment: r.comment,
-        imageUrls: r.image_urls ?? [],
-        adminReply: r.admin_reply,
-        isVisible: r.is_visible,
-        createdAt: r.created_at,
-      })),
+      data: (data ?? []).map((r) => {
+        const photos = Array.isArray(r.photos) && r.photos.length > 0
+          ? r.photos
+          : (Array.isArray(r.image_urls) && r.image_urls.length > 0 ? r.image_urls : []);
+        return {
+          id: r.id,
+          userName: (r.users as unknown as { full_name: string })?.full_name ?? "Pengguna",
+          productName: (r.products as unknown as { name: string })?.name ?? "-",
+          rating: r.rating,
+          comment: r.comment,
+          photos,
+          imageUrls: photos,
+          adminReply: r.admin_reply,
+          isVisible: r.is_visible,
+          createdAt: r.created_at,
+        };
+      }),
     });
   } catch (err) { next(err); }
 });

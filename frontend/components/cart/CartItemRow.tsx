@@ -4,8 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Heart, Trash2, Minus, Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import { formatRupiah, getProductImage, cn } from "@/utils/format";
 import { CartLine, useCartStore } from "@/store/cart-store";
+import { useWishlist } from "@/hooks/useAccountData";
+import { useUser } from "@/hooks/useUser";
 
 const CATEGORY_COLORS: Record<string, string> = {
   Burger: "bg-primary-500",
@@ -19,10 +23,27 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 export default function CartItemRow({ line }: { line: CartLine }) {
+  const router = useRouter();
+  const { user } = useUser();
+  const { isWishlisted, add, remove } = useWishlist();
+  const wishlisted = isWishlisted(line.productId);
+
   const incrementItem = useCartStore((s) => s.incrementItem);
   const decrementItem = useCartStore((s) => s.decrementItem);
   const removeItem = useCartStore((s) => s.removeItem);
-  const toggleFavorite = useCartStore((s) => s.toggleFavorite);
+
+  function handleWishlist() {
+    if (!user) {
+      toast.error("Silakan login dulu untuk memakai wishlist");
+      router.push("/login");
+      return;
+    }
+    if (wishlisted) {
+      remove(line.productId);
+    } else {
+      add(line.productId);
+    }
+  }
 
   return (
     <motion.div
@@ -54,11 +75,11 @@ export default function CartItemRow({ line }: { line: CartLine }) {
           </div>
           <div className="flex shrink-0 items-center gap-1">
             <button
-              onClick={() => toggleFavorite(line.productId)}
+              onClick={handleWishlist}
               aria-label="Tandai favorit"
               className="flex h-8 w-8 items-center justify-center rounded-full text-ink-400 transition-colors hover:bg-surface-cream hover:text-primary-500"
             >
-              <Heart className={cn("h-4 w-4", line.isFavorite && "fill-primary-500 text-primary-500")} />
+              <Heart className={cn("h-4 w-4", wishlisted && "fill-primary-500 text-primary-500")} />
             </button>
             <button
               onClick={() => removeItem(line.productId)}

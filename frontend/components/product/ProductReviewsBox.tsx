@@ -53,7 +53,11 @@ export default function ProductReviewsBox({ product }: { product: Product }) {
   }, [reviews]);
 
   const withPhotoCount = useMemo(
-    () => (reviews ?? []).filter((r) => r.photos && r.photos.length > 0).length,
+    () =>
+      (reviews ?? []).filter((r) => {
+        const photos = r.photos?.length ? r.photos : ((r as unknown as { imageUrls?: string[] }).imageUrls ?? []);
+        return photos && photos.length > 0;
+      }).length,
     [reviews]
   );
 
@@ -184,25 +188,33 @@ export default function ProductReviewsBox({ product }: { product: Product }) {
                     <p className="mt-2.5 pl-11.5 text-sm leading-relaxed text-ink-700">{review.comment}</p>
                   )}
 
-                  {review.photos && review.photos.length > 0 && (
-                    <div className="mt-2.5 flex flex-wrap gap-2 pl-0 sm:pl-11">
-                      {review.photos.map((url, i) => (
-                        <button
-                          key={url}
-                          onClick={() => setLightbox({ images: review.photos, index: i })}
-                          className="group relative block h-20 w-20 overflow-hidden rounded-input border border-surface-border"
-                        >
-                          <Image
-                            src={url}
-                            alt="Foto dari pembeli"
-                            fill
-                            className="object-cover transition-transform group-hover:scale-105"
-                            unoptimized
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                  {(() => {
+                    const photos = (review.photos && review.photos.length > 0)
+                      ? review.photos
+                      : (((review as unknown as { imageUrls?: string[] }).imageUrls && (review as unknown as { imageUrls?: string[] }).imageUrls!.length > 0)
+                          ? (review as unknown as { imageUrls?: string[] }).imageUrls!
+                          : []);
+                    if (!photos || photos.length === 0) return null;
+                    return (
+                      <div className="mt-2.5 flex flex-wrap gap-2 pl-0 sm:pl-11">
+                        {photos.map((url, i) => (
+                          <button
+                            key={url}
+                            onClick={() => setLightbox({ images: photos, index: i })}
+                            className="group relative block h-20 w-20 overflow-hidden rounded-input border border-surface-border"
+                          >
+                            <Image
+                              src={url}
+                              alt="Foto dari pembeli"
+                              fill
+                              className="object-cover transition-transform group-hover:scale-105"
+                              unoptimized
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    );
+                  })()}
 
                   {review.adminReply && (
                     <div className="mt-2.5 ml-0 flex gap-2 rounded-input bg-surface-cream p-3 sm:ml-11">
