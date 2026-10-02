@@ -28,7 +28,13 @@ export default function OrderStatusLive({
   const { data } = useQuery({
     queryKey: ["order-status-live", orderId],
     queryFn: () => orderService.getOrderById(orderId) as Promise<OrderLike>,
-    refetchInterval: 15_000,
+    // Poll lebih cepat (2 detik) saat status masih pending agar status pembayaran
+    // langsung ter-update begitu webhook Midtrans masuk, lalu melambat ke 15 detik
+    // setelah status confirmed/cancelled supaya tidak membebani server.
+    refetchInterval: (query) => {
+      const payStatus = query.state.data?.payments?.[0]?.status;
+      return payStatus === "pending" || payStatus === undefined ? 2_000 : 15_000;
+    },
     initialData: { status: initialStatus, payments: [{ status: initialIsPaid ? "settlement" : "pending" }] },
   });
 

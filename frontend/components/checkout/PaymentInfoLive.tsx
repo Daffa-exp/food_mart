@@ -31,7 +31,12 @@ export default function PaymentInfoLive({
   const { data } = useQuery({
     queryKey: ["order-status-live", orderId],
     queryFn: () => orderService.getOrderById(orderId) as Promise<OrderPaymentLike>,
-    refetchInterval: 15_000,
+    // Poll lebih cepat (2 detik) saat status masih pending — queryKey ini
+    // SENGAJA sama dengan OrderStatusLive.tsx agar keduanya share 1 request.
+    refetchInterval: (query) => {
+      const payStatus = query.state.data?.payments?.[0]?.status;
+      return payStatus === "pending" || payStatus === undefined ? 2_000 : 15_000;
+    },
     initialData: {
       status: initialStatus,
       payments: [

@@ -80,9 +80,9 @@ export const midtransService = {
         quantity: item.quantity,
       })),
       callbacks: {
-        finish: `${baseUrl}/orders?order_id=${input.internalOrderId}`,
-        unfinish: `${baseUrl}/orders?order_id=${input.internalOrderId}`,
-        error: `${baseUrl}/orders?order_id=${input.internalOrderId}`,
+        finish: `${baseUrl}/checkout/berhasil?order_id=${input.internalOrderId}`,
+        unfinish: `${baseUrl}/checkout/berhasil?order_id=${input.internalOrderId}`,
+        error: `${baseUrl}/checkout/berhasil?order_id=${input.internalOrderId}`,
       },
     };
 
