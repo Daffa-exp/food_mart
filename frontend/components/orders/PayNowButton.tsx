@@ -28,14 +28,15 @@ export default function PayNowButton({
       payWithSnap(snapToken, {
         onSuccess: () => {
           toast.success("Pembayaran berhasil!");
-          router.push(`/checkout/berhasil?order_id=${orderId}`);
+          router.push(`/orders?order_id=${orderId}`);
         },
         onPending: () => {
           toast("Menunggu pembayaran kamu diselesaikan");
-          router.push(`/checkout/berhasil?order_id=${orderId}`);
+          router.push(`/orders?order_id=${orderId}`);
         },
         onError: () => {
           toast.error("Pembayaran gagal, silakan coba lagi");
+          router.push(`/orders?order_id=${orderId}`);
         },
         onClose: () => {
           toast("Kamu menutup jendela pembayaran");

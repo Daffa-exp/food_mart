@@ -88,9 +88,9 @@ export const midtransService = {
       // - unfinish : customer menutup/membatalkan sebelum selesai
       // - error    : pembayaran gagal/ditolak
       callbacks: {
-        finish: `${env.CLIENT_URL}/checkout/berhasil?order_id=${input.internalOrderId}`,
-        unfinish: `${env.CLIENT_URL}/checkout/gagal?order_id=${input.internalOrderId}`,
-        error: `${env.CLIENT_URL}/checkout/gagal?order_id=${input.internalOrderId}`,
+        finish: `${env.CLIENT_URL}/orders?order_id=${input.internalOrderId}`,
+        unfinish: `${env.CLIENT_URL}/orders?order_id=${input.internalOrderId}`,
+        error: `${env.CLIENT_URL}/orders?order_id=${input.internalOrderId}`,
       },
       // Semua metode di bawah ini diaktifkan di Midtrans Dashboard Sandbox,
       // enabled_payments opsional dikosongkan agar Snap menampilkan semua

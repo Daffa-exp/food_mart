@@ -113,21 +113,21 @@ function CheckoutForm() {
       payWithSnap(result.snapToken, {
         onSuccess: () => {
           toast.success("Pembayaran berhasil!");
-          router.push(`/checkout/berhasil?order_id=${result.orderId}`);
+          router.push(`/orders?order_id=${result.orderId}`);
         },
         onPending: () => {
           toast("Menunggu pembayaran kamu diselesaikan");
-          router.push(`/checkout/berhasil?order_id=${result.orderId}`);
+          router.push(`/orders?order_id=${result.orderId}`);
         },
         onError: () => {
           toast.error("Pembayaran gagal, silakan coba lagi");
-          router.push(`/checkout/gagal?order_id=${result.orderId}`);
+          router.push(`/orders?order_id=${result.orderId}`);
         },
         onClose: () => {
           toast("Kamu menutup jendela pembayaran. Order tetap tersimpan, kamu bisa bayar lagi lewat Riwayat Pesanan.", {
             duration: 5000,
           });
-          router.push(`/checkout/berhasil?order_id=${result.orderId}`);
+          router.push(`/orders?order_id=${result.orderId}`);
         },
       });
     } catch (err) {

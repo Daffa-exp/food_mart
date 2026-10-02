@@ -120,7 +120,7 @@ function pushUrlForType(type: NotificationType, referenceId?: string): string {
   switch (type) {
     case "order":
     case "payment":
-      return referenceId ? `/checkout/berhasil?order_id=${referenceId}` : "/orders";
+      return referenceId ? `/orders?order_id=${referenceId}` : "/orders";
     case "review":
       return "/orders";
     case "promotion":
