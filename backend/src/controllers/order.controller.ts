@@ -6,6 +6,7 @@ import { orderRepository } from "../repositories/order.repository";
 import { paymentRepository } from "../repositories/payment.repository";
 import { couponRepository, calculateCouponDiscount } from "../repositories/coupon.repository";
 import { midtransService } from "../services/midtrans.service";
+import { paymentSyncService } from "../services/payment-sync.service";
 import { getPricingSettings, calculateShippingFeeFromSettings } from "../utils/pricing";
 import { AppError } from "../middlewares/errorHandler";
 
@@ -254,7 +255,10 @@ const snap = await midtransService.createSnapTransaction({
 
   async getOrderById(req: Request, res: Response, next: NextFunction) {
     try {
-      const order = await orderRepository.findById(req.params.id);
+      let order = await orderRepository.findById(req.params.id);
+      if (order && order.status === "pending") {
+        order = (await paymentSyncService.syncOrderPayment(order as any)) as any;
+      }
       res.json({ success: true, data: order });
     } catch (err) {
       next(err);
@@ -265,7 +269,8 @@ const snap = await midtransService.createSnapTransaction({
     try {
       const user = await userRepository.findOrCreateByAuthId(req.user!.authId);
       const orders = await orderRepository.findByUserId(user.id);
-      res.json({ success: true, data: orders });
+      const syncedOrders = await paymentSyncService.syncPendingOrders(orders as any);
+      res.json({ success: true, data: syncedOrders });
     } catch (err) {
       next(err);
     }

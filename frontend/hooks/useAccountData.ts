@@ -90,7 +90,10 @@ export function useMyOrders() {
     queryKey: ["my-orders"],
     queryFn: () => orderHistoryService.listMine(),
     enabled: !!user,
-    refetchInterval: 15_000,
+    refetchInterval: (query) => {
+      const hasPending = query.state.data?.some((o) => o.status === "pending");
+      return hasPending ? 2_000 : 15_000;
+    },
   });
 }
 

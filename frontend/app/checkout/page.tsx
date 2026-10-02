@@ -15,6 +15,7 @@ import PaymentMethodSelector from "@/components/checkout/PaymentMethodSelector";
 import OrderSummary from "@/components/checkout/OrderSummary";
 import RequireAuth from "@/components/auth/RequireAuth";
 import { checkoutSchema, CheckoutFormValues } from "@/utils/checkout-validation";
+import { useQueryClient } from "@tanstack/react-query";
 import { usePricingSettings } from "@/hooks/usePricingSettings";
 import { useCartStore } from "@/store/cart-store";
 import { useMidtransSnap } from "@/hooks/useMidtransSnap";
@@ -47,6 +48,7 @@ export default function CheckoutPage() {
 
 function CheckoutForm() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const lines = useCartStore((s) => s.lines);
   const subtotal = useCartStore((s) => s.subtotal());
   const clearCart = useCartStore((s) => s.clearCart);
@@ -112,18 +114,25 @@ function CheckoutForm() {
 
       payWithSnap(result.snapToken, {
         onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["order-status-live"] });
+          queryClient.invalidateQueries({ queryKey: ["my-orders"] });
           toast.success("Pembayaran berhasil!");
           router.push(`/checkout/berhasil?order_id=${result.orderId}`);
         },
         onPending: () => {
+          queryClient.invalidateQueries({ queryKey: ["order-status-live"] });
+          queryClient.invalidateQueries({ queryKey: ["my-orders"] });
           toast("Menunggu pembayaran kamu diselesaikan");
           router.push(`/checkout/berhasil?order_id=${result.orderId}`);
         },
         onError: () => {
+          queryClient.invalidateQueries({ queryKey: ["order-status-live"] });
+          queryClient.invalidateQueries({ queryKey: ["my-orders"] });
           toast.error("Pembayaran gagal, silakan coba lagi");
           router.push(`/checkout/berhasil?order_id=${result.orderId}`);
         },
         onClose: () => {
+          queryClient.invalidateQueries({ queryKey: ["my-orders"] });
           toast("Kamu menutup jendela pembayaran. Order tetap tersimpan, kamu bisa bayar lagi lewat Riwayat Pesanan.", {
             duration: 5000,
           });

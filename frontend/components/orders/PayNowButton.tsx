@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { CreditCard } from "lucide-react";
 import Button from "@/components/ui/Button";
@@ -18,6 +19,7 @@ export default function PayNowButton({
   size?: "sm" | "md" | "lg";
 }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { payWithSnap } = useMidtransSnap();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -27,18 +29,25 @@ export default function PayNowButton({
       const { snapToken } = await orderService.resumePayment(orderId);
       payWithSnap(snapToken, {
         onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["order-status-live"] });
+          queryClient.invalidateQueries({ queryKey: ["my-orders"] });
           toast.success("Pembayaran berhasil!");
           router.push(`/checkout/berhasil?order_id=${orderId}`);
         },
         onPending: () => {
+          queryClient.invalidateQueries({ queryKey: ["order-status-live"] });
+          queryClient.invalidateQueries({ queryKey: ["my-orders"] });
           toast("Menunggu pembayaran kamu diselesaikan");
           router.push(`/checkout/berhasil?order_id=${orderId}`);
         },
         onError: () => {
+          queryClient.invalidateQueries({ queryKey: ["order-status-live"] });
+          queryClient.invalidateQueries({ queryKey: ["my-orders"] });
           toast.error("Pembayaran gagal, silakan coba lagi");
           router.push(`/checkout/berhasil?order_id=${orderId}`);
         },
         onClose: () => {
+          queryClient.invalidateQueries({ queryKey: ["my-orders"] });
           toast("Kamu menutup jendela pembayaran");
         },
       });
